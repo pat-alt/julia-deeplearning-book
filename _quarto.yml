@@ -1,0 +1,27 @@
+project:
+  type: book
+  execute-dir: project
+  output-dir: docs
+
+book:
+  title: "Julia for Deep Learning"
+  subtitle: "Companion book of the [Julia for Deep Learning Course](https://github.com/cpfiffer/julia-deeplearning)"
+  author: 
+    - name: Patrick Altmeyer
+  date: today
+  chapters:
+    - index.qmd
+    - intro.qmd
+    - chapters/c4.qmd
+    - summary.qmd
+    - references.qmd
+
+bibliography: references.bib
+
+format:
+  julia-html: default
+
+jupyter: julia-1.9
+
+
+

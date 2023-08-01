@@ -1,0 +1,10 @@
+title: |
+  `Documenter.jl`
+author: pat-alt
+version: 1.0.0
+quarto-required: ">=99.9.0"
+contributes:
+  formats:
+    commonmark:
+      variant: -raw_html+tex_math_dollars
+      wrap: preserve

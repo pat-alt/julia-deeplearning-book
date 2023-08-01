@@ -1,0 +1,49 @@
+/*-- scss:defaults --*/
+@font-face {
+    font-family: JuliaMono-Light;
+    src: url("https://cdn.jsdelivr.net/gh/cormullion/juliamono/webfonts/JuliaMono-Light.woff2");
+}
+
+@import url("https://fonts.googleapis.com/css?family=Roboto");
+
+$font-family-monospace: "JuliaMono-Light" !default;
+$font-family-sans-serif: "Roboto" !default;
+
+// Colors
+// Define the Julia colours as per https://github.com/JuliaLang/julia-logo-graphics#color-definitions
+$julia-blue: #4063D8;
+$julia-green: #389836;
+$julia-purple: #9558B2;
+$julia-red: #CB3C33;
+// Assign:
+$primary: $julia-blue !default;
+$body-bg: #ffffff !default;
+$body-color: #000000 !default;
+$presentation-heading-color: $julia-blue !default;
+$link-color: $julia-blue !default;
+// Code:
+$code-color: $julia-green !default;
+$dark-bg-code-color: lighten($code-color, 15%) !default;
+$light-bg-code-color: darken($code-color, 15%) !default;
+$code-block-border-left: lighten($code-color, 15%) !default;
+$btn-code-copy-color: $julia-purple !default;
+$btn-code-copy-color-active: lighten($btn-code-copy-color, 15%) !default;
+// Toc:
+$toc-color: $julia-purple !default;
+$toc-active-border: $julia-purple !default;
+$toc-inactive-border: lighten($toc-active-border, 15%) !default;
+// Callouts:
+$callout-color-note: $julia-blue !default;
+$callout-color-tip: $julia-green !default;
+$callout-color-warning: $julia-purple !default;
+$callout-color-caution: lighten($callout-color-warning, 30%) !default;
+$callout-color-important: $julia-red !default;
+
+/*-- scss:rules --*/
+h1, h2, h3, h4, h5, h6 {
+    font-family: "JuliaMono-Light";
+}
+
+hr {
+    color: $julia-blue;
+}

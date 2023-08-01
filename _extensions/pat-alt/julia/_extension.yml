@@ -1,0 +1,13 @@
+title: Julia
+author: pat-alt
+version: 1.0.0
+quarto-required: ">=99.9.0"
+contributes:
+  formats:
+    html:
+      toc: true
+      theme: [default, custom.scss]
+    revealjs:
+      theme: [default, custom.scss, revealjs.scss]
+
+
