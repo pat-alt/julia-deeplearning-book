@@ -8,6 +8,7 @@ book:
   subtitle: "Companion book of the [Julia for Deep Learning Course](https://github.com/cpfiffer/julia-deeplearning)"
   author: 
     - name: Patrick Altmeyer
+    - name: Cameron Pfiffer
   date: today
   chapters:
     - index.qmd
