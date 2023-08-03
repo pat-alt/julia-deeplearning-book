@@ -1,3 +1,37 @@
 # Preface {.unnumbered}
 
 This book provides an overview of a pure Julia implementation of the fastai book: [Deep Learning for Coders with fastai and PyTorch](https://github.com/fastai/fastbook). The original book works with Python and PyTorch. This book works with Julia and relies primarily on `Flux.jl`. The original book is written by Jeremy Howard and Sylvain Gugger. This book is written by participants of the [Julia for Deep Learning](https://www.deep-learning.club/) course.
+
+## Local rendering instructions
+
+1. Clone [the repo](https://github.com/pat-alt/julia-deeplearning-book) for this book
+   somewhere on your computer. Navigate using a terminal to the folder containing
+   the repository.
+2. Add the Julia kernel to Jupyter. This is currently tested with Julia 1.9,
+   your results may vary with different versions of julia.
+
+	```julia
+	# Load the current environment
+	using Pkg; Pkg.activate("."); Pkg.instantiate()
+
+	# Import IJulia
+	using IJulia
+
+	# Call a notebook. You can close it once you call this --
+	# we only need to run notebook() once for it to build the
+	# jupyter kernel for Julia.
+	notebook()
+	````
+
+3. Install [Quarto](https://quarto.org/docs/get-started/).
+4. Render the website from the root of this folder with 
+
+	```
+	quarto render
+	```
+5. Optionally, if you want to preview the HTML version of the page 
+   before you merge it to `main`, you can run
+
+	```
+	quarter preview
+	```

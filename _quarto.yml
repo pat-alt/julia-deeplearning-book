@@ -9,12 +9,6 @@ book:
   author: 
     - name: Patrick Altmeyer
     - name: Cameron Pfiffer
-      email: cameron@pfiffer.org
-      affiliation: 
-      - name: Stanford University
-        city: Stanford
-        state: CA
-        url: www.stanford.edu
   date: today
   chapters:
     - index.qmd
