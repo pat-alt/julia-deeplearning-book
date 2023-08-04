@@ -7,7 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Patrick Altmeyer">
-<meta name="dcterms.date" content="2023-08-01">
+<meta name="author" content="Cameron Pfiffer">
+<meta name="dcterms.date" content="2023-08-04">
 
 <title>Julia for Deep Learning</title>
 <style>
@@ -22,7 +23,26 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -33,6 +53,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
 <link href="./intro.html" rel="next">
+<link href="./logo.png" rel="icon" type="image/png">
 <script src="site_libs/quarto-html/quarto.js"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
@@ -69,6 +90,9 @@ ul.task-list li input[type="checkbox"] {
 }</script>
 
 
+<meta name="twitter:title" content="Julia for Deep Learning">
+<meta name="twitter:description" content="Companion book of the Julia for Deep Learning Course">
+<meta name="twitter:card" content="summary">
 </head>
 
 <body class="nav-sidebar floating">
@@ -96,6 +120,10 @@ ul.task-list li input[type="checkbox"] {
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="./">Julia for Deep Learning</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/pat-alt/julia-deeplearning-book" rel="" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+    <a href="https://twitter.com/intent/tweet?url=|url|" rel="" title="Twitter" class="quarto-navigation-tool px-1" aria-label="Twitter"><i class="bi bi-twitter"></i></a>
+</div>
     </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -147,7 +175,7 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#preface" id="toc-preface" class="nav-link active" data-scroll-target="#preface">Preface</a></li>
   </ul>
-</nav>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/pat-alt/julia-deeplearning-book/edit/main/index.qmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/pat-alt/julia-deeplearning-book/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -159,20 +187,39 @@ ul.task-list li input[type="checkbox"] {
 </div>
 
 
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Authors</div>
+  <div class="quarto-title-meta-heading">Affiliations</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Patrick Altmeyer </p>
+  </div>
+    <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            <a href="https://www.tudelft.nl/">
+            Delft University of Technology
+            </a>
+          </p>
+      </div>
+      <div class="quarto-title-meta-contents">
+    <p class="author">Cameron Pfiffer </p>
+  </div>
+    <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            <a href="www.stanford.edu">
+            Stanford University
+            </a>
+          </p>
+      </div>
+    </div>
 
 <div class="quarto-title-meta">
 
-    <div>
-    <div class="quarto-title-meta-heading">Author</div>
-    <div class="quarto-title-meta-contents">
-             <p>Patrick Altmeyer </p>
-          </div>
-  </div>
-    
+      
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 1, 2023</p>
+      <p class="date">August 4, 2023</p>
     </div>
   </div>
   
@@ -182,11 +229,21 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
+
 <section id="preface" class="level1 unnumbered">
-<h1 class="unnumbered">Preface</h1>
-<p>This book provides an overview of a pure Julia implementation of the fastai book: <a href="https://github.com/fastai/fastbook">Deep Learning for Coders with fastai and PyTorch</a>. The original book works with Python and PyTorch. This book works with Julia and relies primarily on <code>Flux.jl</code>. The original book is written by Jeremy Howard and Sylvain Gugger. This book is written by participants of the <a href="https://www.deep-learning.club/">Julia for Deep Learning</a> course.</p>
+<h1 class="unnumbered">Preface</h1><p><img src="logo.png" title="Julia for Deep Learning" class="quarto-cover-image img-fluid"></p>
+<p>This book provides an overview of a pure Julia implementation of the fastai book: <a href="https://github.com/fastai/fastbook">Deep Learning for Coders with fastai and PyTorch</a>. The original book works with Python and PyTorch. This book works with Julia and relies primarily on <a href="https://fluxml.ai/"><code>Flux.jl</code></a> <span class="citation" data-cites="innes2018flux">(<a href="references.html#ref-innes2018flux" role="doc-biblioref">Innes 2018</a>)</span>. The original book is written by Jeremy Howard and Sylvain Gugge <span class="citation" data-cites="howard2020deep">(<a href="references.html#ref-howard2020deep" role="doc-biblioref">Howard and Gugger 2020</a>)</span>. This book is written by participants of the <a href="https://www.deep-learning.club/">Julia for Deep Learning</a> course.</p>
+<p>The book is served from <a href="https://github.com/pat-alt/julia-deeplearning-book">GitHub</a>.</p>
 
 
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-howard2020deep" class="csl-entry" role="listitem">
+Howard, Jeremy, and Sylvain Gugger. 2020. <em>Deep <span>Learning</span> for <span>Coders</span> with Fastai and <span>PyTorch</span></em>. "O’Reilly Media, Inc.".
+</div>
+<div id="ref-innes2018flux" class="csl-entry" role="listitem">
+Innes, Mike. 2018. <span>“Flux: <span>Elegant</span> Machine Learning with <span>Julia</span>.”</span> <em>Journal of Open Source Software</em> 3 (25): 602.
+</div>
+</div>
 </section>
 
 </main> <!-- /main -->

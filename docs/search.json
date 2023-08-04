@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Julia for Deep Learning",
     "section": "",
-    "text": "Preface\nThis book provides an overview of a pure Julia implementation of the fastai book: Deep Learning for Coders with fastai and PyTorch. The original book works with Python and PyTorch. This book works with Julia and relies primarily on Flux.jl. The original book is written by Jeremy Howard and Sylvain Gugger. This book is written by participants of the Julia for Deep Learning course."
+    "text": "Preface\nThis book provides an overview of a pure Julia implementation of the fastai book: Deep Learning for Coders with fastai and PyTorch. The original book works with Python and PyTorch. This book works with Julia and relies primarily on Flux.jl (Innes 2018). The original book is written by Jeremy Howard and Sylvain Gugge (Howard and Gugger 2020). This book is written by participants of the Julia for Deep Learning course.\nThe book is served from GitHub.\n\n\n\n\nHoward, Jeremy, and Sylvain Gugger. 2020. Deep Learning for Coders with Fastai and PyTorch. \"O’Reilly Media, Inc.\".\n\n\nInnes, Mike. 2018. “Flux: Elegant Machine Learning with Julia.” Journal of Open Source Software 3 (25): 602."
   },
   {
     "objectID": "intro.html",
@@ -33,5 +33,12 @@
     "title": "3  Summary",
     "section": "",
     "text": "In summary, this book has no content whatsoever."
+  },
+  {
+    "objectID": "references.html",
+    "href": "references.html",
+    "title": "References",
+    "section": "",
+    "text": "Howard, Jeremy, and Sylvain Gugger. 2020. Deep Learning\nfor Coders with Fastai and PyTorch.\n\"O’Reilly Media, Inc.\"."
   }
 ]

@@ -8,13 +8,19 @@ book:
   subtitle: "Companion book of the [Julia for Deep Learning Course](https://github.com/cpfiffer/julia-deeplearning)"
   author: 
     - name: Patrick Altmeyer
+      email: p.altmeyer@tudelft.nl
+      affiliation:
+        - name: Delft University of Technology
+          city: Delft
+          state: North-Holland
+          url: https://www.tudelft.nl/
     - name: Cameron Pfiffer
       email: cameron@pfiffer.org
       affiliation: 
-      - name: Stanford University
-        city: Stanford
-        state: CA
-        url: www.stanford.edu
+        - name: Stanford University
+          city: Stanford
+          state: CA
+          url: www.stanford.edu
   date: today
   chapters:
     - index.qmd
@@ -22,6 +28,13 @@ book:
     - chapters/c4.qmd
     - summary.qmd
     - references.qmd
+  favicon: logo.png
+  cover-image: logo.png
+  repo-url: https://github.com/pat-alt/julia-deeplearning-book
+  repo-actions: [edit, issue]
+  search: true
+  sharing: [twitter]
+  twitter-card: true
 
 bibliography: references.bib
 
