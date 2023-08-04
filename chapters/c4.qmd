@@ -16,8 +16,9 @@ using MLDatasets
 using MLUtils
 using OneHotArrays
 using Plots
+using Statistics
+
 import UnicodePlots
-import Statistics
 
 # File paths:
 www_path = "www"
@@ -111,22 +112,22 @@ size(stacked_sevens), size(stacked_threes)
 
 ```{julia}
 
-mean3 = Statistics.mean(stacked_threes, dims=3)
+mean3 = mean(stacked_threes, dims=3)
 mean3 = mean3[:, :, 1]
 
 ```
 
 ```{julia}
 
-mean7 = Statistics.mean(stacked_sevens, dims=3)
+mean7 = mean(stacked_sevens, dims=3)
 mean7 = mean7[:, :, 1]
 
 ```
 
 ```{julia}
 a_3 = stacked_threes[:, :, 1]
-dist_3_abs = Statistics.mean(abs.(a_3 .- mean3))
-dist_3_sqr = sqrt(Statistics.mean((a_3 .- mean3) .^ 2))
+dist_3_abs = mean(abs.(a_3 .- mean3))
+dist_3_sqr = sqrt(mean((a_3 .- mean3) .^ 2))
 dist_3_abs, dist_3_sqr
 
 ```
@@ -153,7 +154,7 @@ size(valid_3_tens), size(valid_7_tens)
 ```{julia}
 
 function mnist_distance(a, b)
-    mm = Statistics.mean(Float32.(abs.(a .- b)), dims=(1, 2))
+    mm = mean(Float32.(abs.(a .- b)), dims=(1, 2))
     return dropdims(mm, dims=(1, 2))
 end
 
@@ -175,9 +176,7 @@ size(valid_3_tens .- mean3)
 
 ```{julia}
 
-function is_3(x)
-    return mnist_distance(x, mean3) .< mnist_distance(x, mean7)
-end
+is_3(x) = mnist_distance(x, mean3) .< mnist_distance(x, mean7)
 
 ```
 
@@ -191,8 +190,8 @@ is_3(valid_7_tens[:, :, 1:10])
 ```
 
 ```{julia}
-accuracy_3s = Statistics.mean(is_3(valid_3_tens))
-accuracy_7s = Statistics.mean(1 .- is_3(valid_7_tens))
+accuracy_3s = mean(is_3(valid_3_tens))
+accuracy_7s = mean(1 .- is_3(valid_7_tens))
 
 accuracy_3s, accuracy_7s
 
@@ -325,7 +324,7 @@ show_preds(preds)
 ```
 
 ```{julia}
-
+## params will be updated in place
 function apply_step!(params; lr=1e-5, prn=true)
     grad = dloss(params)[1]
     params .-= lr * grad
@@ -371,6 +370,313 @@ params, loss = apply_step!(params, prn=true);
 show_preds(f(time, params))
 
 ```
+
+
+## The MNIST Loss Function
+
+```{julia}
+
+train_x = cat(stacked_threes, stacked_sevens, dims=3) |> x -> reshape(x, 28 * 28, :) |> transpose;
+train_y = vcat(repeat([1], size(stacked_threes)[3]), repeat([0], size(stacked_sevens)[3]));
+
+size(train_x), size(train_y)
+
+```
+
+```{julia}
+dset = [(train_x[i, :], train_y[i]) for i in range(1, size(train_x)[1])]
+x, y = dset[1]
+size(dset), size(x), y
+
+```
+
+```{julia}
+valid_x = cat(valid_3_tens, valid_7_tens, dims=3) |> x -> reshape(x, 28 * 28, :) |> transpose;
+valid_y = vcat(repeat([1], size(valid_3_tens)[3]), repeat([0], size(valid_7_tens)[3]));
+valid_dset = zip(eachrow(valid_x), valid_y);
+x, y = dset[1]
+size(x), y
+
+```
+
+```{julia}
+init_params(size; std=1.0) = randn(size) * std
+
+weights = init_params((28 * 28, 1))
+
+bias = init_params(1)
+
+```
+
+```{julia}
+
+train_x = convert(Array{Float32}, train_x)
+
+xx = train_x[1:1, :] * weights .+ bias
+
+## gradient?
+gradient(weights -> sum(train_x[1:1, :] * weights), weights)
+
+```
+
+```{julia}
+
+linear1(xb) = xb * weights .+ bias
+preds = linear1(train_x)
+
+```
+
+```{julia}
+corrects = (preds .> 0.0) .=== Bool.(train_y)
+
+mean(corrects)
+
+```
+
+```{julia}
+
+weights[1] *= 1.0001
+
+preds = linear1(train_x)
+mean((preds .> 0.0) .== Bool.(train_y))
+
+```
+
+```{julia}
+
+trgts = [1, 0, 1]
+prds = [0.9, 0.4, 0.2]
+
+mnist_loss(predictions, targets) = mean(t === 1 ? 1 - p : p for (p, t) in zip(predictions, targets))
+
+[t === 1 ? 1 - p : p for (p, t) in zip(prds, trgts)]
+
+mnist_loss(prds, trgts)
+
+mnist_loss([0.9, 0.4, 0.8], trgts)
+
+```
+
+```{julia}
+sigmoid(x) = 1 / (1 + exp(-x))
+
+plot(range(-5, 5, length=100), sigmoid)
+sigmoid.(rand(10))
+
+```
+```{julia}
+
+function mnist_loss(predictions, targets)
+    predictions = sigmoid.(predictions)
+    return mean([t === 1 ? 1 - p : p for (p, t) in zip(predictions, targets)])
+end
+
+```
+
+## SGD and Mini-Batches
+
+```{julia}
+
+coll = range(1, 15)
+
+dl = DataLoader((coll), batchsize=5, shuffle=true)
+
+collect(dl)
+
+```
+
+```{julia}
+
+lowercase_alphabets = [Char(i) for i in 97:122]
+
+ds = [ (i, v) for (i, v) in enumerate(lowercase_alphabets)]
+
+dl = DataLoader(ds, batchsize=5, shuffle=true)
+collect(dl)
+
+```
+
+```{julia}
+
+weights = init_params((28*28,1))
+bias = init_params(1)
+size(weights), size(bias)
+
+```
+
+```{julia}
+
+function reformat_dl(d1) 
+    xb = stack([x for (x, y) in d1], dims=1)
+    yb = stack([[y] for (x, y) in d1], dims=1)
+    return xb, yb
+end
+
+dl = DataLoader(dset, batchsize=256)
+
+d1 = first(dl)
+length(d1)
+
+xb, yb = reformat_dl(d1)
+
+size(xb), size(yb)
+
+```
+
+```{julia}
+valid_dset = [(valid_x[i, :], valid_y[i]) for i in range(1, size(valid_x)[1])]
+
+valid_dl = DataLoader(valid_dset, batchsize=256)
+
+```
+
+```{julia}
+
+batch = train_x[1:4, :]
+size(batch)
+
+preds = linear1(batch)
+
+loss = mnist_loss(preds, train_y[1:4])
+
+## redefine linear layer to include weights and bias as parameters
+## how to combine weights and bias into a single parameter dictionary?
+
+linear1(xb, weights, bias) = xb * weights .+ bias
+preds = linear1(batch, weights, bias)
+
+curr_gr = gradient(weights, bias) do weights, bias
+    preds = linear1(batch, weights, bias)
+    mnist_loss(preds, train_y[1:4])
+end
+
+```
+
+```{julia}
+
+lr = 1e-4
+function calc_grad(xb, yb, model, weights, bias)
+    preds = model(xb, weights, bias)
+    loss = mnist_loss(preds, yb)
+    curr_gr = gradient(weights, bias) do weights, bias
+        preds = model(batch, weights, bias)
+        mnist_loss(preds, yb)
+    end
+    return curr_gr
+end
+
+
+```
+
+Using params dictionary?
+
+```{julia}
+
+params = Dict("weights" => weights, "bias" => bias)
+
+linear1(xb, params) = xb * params["weights"] .+ params["bias"]
+preds = linear1(batch, params)
+
+function calc_grad(xb, yb, model, params)
+    preds = model(xb, params)
+    loss = mnist_loss(preds, yb)
+    curr_gr = gradient(params) do params
+        preds = model(batch, params)
+        mnist_loss(preds, yb)
+    end
+end
+
+
+```
+```{julia}
+
+curr_grad = calc_grad(batch, train_y[1:4], linear1, weights, bias)
+dict_grad = calc_grad(batch, train_y[1:4], linear1, params)
+## weights.grad.mean(),bias.grad
+
+mean(curr_grad[1]), mean(curr_grad[2])
+mean(dict_grad[1]["weights"]), mean(dict_grad[1]["bias"])
+
+```
+
+```{julia}
+
+function train_epoch(model, lr, params)
+    for dd in dl
+        println(size(dd))
+        xb, yb = reformat_dl(dd)
+        calc_grad(xb, yb, model, params)
+        for k in keys(params)
+            params[k] .-= params[k] * lr
+            ## p.grad.zero_()
+        end
+    end
+end
+
+```
+
+```{julia}
+
+(preds .> 0.0) == Bool.(train_y[1:4])
+
+```
+
+
+```{julia}
+
+function batch_accuracy(xb, yb)
+    preds = sigmoid.(xb)
+    correct = (preds .> 0.5) .== yb
+    return mean(correct)
+end
+
+```
+
+
+```{julia}
+
+batch_accuracy(linear1(batch, params), train_y[1:4])
+
+```
+
+
+```{julia}
+
+function validate_epoch(model)
+    accs = zeros(length(valid_dl))
+    i = 1
+    for dd in valid_dl
+        xb, yb = reformat_dl(dd)
+        accs[i] = batch_accuracy(model(xb, params), yb)
+    end
+    return round(mean(accs), digits=4)
+end
+
+```
+
+```{julia}
+
+lr = 1.
+params = Dict("weights" => weights, "bias" => bias)
+
+train_epoch(linear1, lr, params)
+
+validate_epoch(linear1)
+
+```
+
+```{julia}
+
+for i in range(20):
+    train_epoch(linear1, lr, params)
+    print(validate_epoch(linear1), end=' ')
+
+```
+
+## Creating an Optimizer
+
+
+## Adding a Nonlinearity
 
 ## Training a Digit Classifier
 
