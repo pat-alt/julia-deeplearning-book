@@ -27,7 +27,9 @@ book:
     - intro.qmd
     - chapters/c4.qmd
     - summary.qmd
+    - contributors.qmd
     - references.qmd
+
   favicon: logo.png
   cover-image: logo.png
   repo-url: https://github.com/pat-alt/julia-deeplearning-book
