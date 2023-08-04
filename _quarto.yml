@@ -33,19 +33,13 @@ book:
   repo-url: https://github.com/pat-alt/julia-deeplearning-book
   repo-actions: [edit, issue]
   search: true
-  downloads: [epub]
   sharing: [twitter]
   twitter-card: true
-
-comments:
-  utterances:
-    repo: pat-alt/julia-deeplearning-book
 
 bibliography: references.bib
 
 format:
   julia-html: default
-  epub: default
 
 jupyter: julia-1.9
 
