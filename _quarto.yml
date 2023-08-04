@@ -43,6 +43,12 @@ bibliography: references.bib
 format:
   julia-html: default
 
+execute:
+  freeze: auto
+  eval: true
+  echo: true
+  output: true
+
 jupyter: julia-1.9
 
 

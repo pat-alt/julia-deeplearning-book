@@ -6,11 +6,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="Patrick Altmeyer">
-<meta name="author" content="Cameron Pfiffer">
-<meta name="dcterms.date" content="2023-08-04">
 
-<title>Julia for Deep Learning</title>
+<title>Julia for Deep Learning - 4&nbsp; Contributors’ Guide</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,26 +20,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for citations */
-div.csl-bib-body { }
-div.csl-entry {
-  clear: both;
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
 }
-.hanging-indent div.csl-entry {
-  margin-left:2em;
-  text-indent:-2em;
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
-div.csl-left-margin {
-  min-width:2em;
-  float:left;
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-div.csl-right-inline {
-  margin-left:2em;
-  padding-left:1em;
-}
-div.csl-indent {
-  margin-left: 2em;
-}</style>
+</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -52,7 +64,8 @@ div.csl-indent {
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
-<link href="./intro.html" rel="next">
+<link href="./references.html" rel="next">
+<link href="./summary.html" rel="prev">
 <link href="./logo.png" rel="icon" type="image/png">
 <script src="site_libs/quarto-html/quarto.js"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
@@ -90,8 +103,8 @@ div.csl-indent {
 }</script>
 
 
-<meta name="twitter:title" content="Julia for Deep Learning">
-<meta name="twitter:description" content="Companion book of the Julia for Deep Learning Course">
+<meta name="twitter:title" content="Julia for Deep Learning - 4&nbsp; Contributors’ Guide">
+<meta name="twitter:description" content="">
 <meta name="twitter:card" content="summary">
 </head>
 
@@ -104,7 +117,7 @@ div.csl-indent {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Preface</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./contributors.html"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Contributors' Guide</span></a></li></ol></nav>
         <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
@@ -135,7 +148,7 @@ div.csl-indent {
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./index.html" class="sidebar-item-text sidebar-link active">
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Preface</span></a>
   </div>
 </li>
@@ -159,7 +172,7 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./contributors.html" class="sidebar-item-text sidebar-link">
+  <a href="./contributors.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Contributors’ Guide</span></span></a>
   </div>
 </li>
@@ -179,55 +192,23 @@ div.csl-indent {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#preface" id="toc-preface" class="nav-link active" data-scroll-target="#preface">Preface</a></li>
+  <li><a href="#local-rendering-instructions" id="toc-local-rendering-instructions" class="nav-link active" data-scroll-target="#local-rendering-instructions"><span class="header-section-number">4.1</span> Local rendering instructions</a></li>
   </ul>
-<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/pat-alt/julia-deeplearning-book/edit/main/index.qmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/pat-alt/julia-deeplearning-book/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
+<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/pat-alt/julia-deeplearning-book/edit/main/contributors.qmd" class="toc-action">Edit this page</a></p><p><a href="https://github.com/pat-alt/julia-deeplearning-book/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Julia for Deep Learning</h1>
-<p class="subtitle lead">Companion book of the <a href="https://github.com/cpfiffer/julia-deeplearning">Julia for Deep Learning Course</a></p>
+<h1 class="title"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Contributors’ Guide</span></h1>
 </div>
 
 
-<div class="quarto-title-meta-author">
-  <div class="quarto-title-meta-heading">Authors</div>
-  <div class="quarto-title-meta-heading">Affiliations</div>
-  
-    <div class="quarto-title-meta-contents">
-    <p class="author">Patrick Altmeyer </p>
-  </div>
-    <div class="quarto-title-meta-contents">
-        <p class="affiliation">
-            <a href="https://www.tudelft.nl/">
-            Delft University of Technology
-            </a>
-          </p>
-      </div>
-      <div class="quarto-title-meta-contents">
-    <p class="author">Cameron Pfiffer </p>
-  </div>
-    <div class="quarto-title-meta-contents">
-        <p class="affiliation">
-            <a href="www.stanford.edu">
-            Stanford University
-            </a>
-          </p>
-      </div>
-    </div>
 
 <div class="quarto-title-meta">
 
-      
-    <div>
-    <div class="quarto-title-meta-heading">Published</div>
-    <div class="quarto-title-meta-contents">
-      <p class="date">August 4, 2023</p>
-    </div>
-  </div>
+    
   
     
   </div>
@@ -235,21 +216,46 @@ div.csl-indent {
 
 </header>
 
-
-<section id="preface" class="level1 unnumbered">
-<h1 class="unnumbered">Preface</h1><p><img src="logo.png" title="Julia for Deep Learning" class="quarto-cover-image img-fluid"></p>
-<p>This book provides an overview of a pure Julia implementation of the fastai book: <a href="https://github.com/fastai/fastbook">Deep Learning for Coders with fastai and PyTorch</a>. The original book works with Python and PyTorch. This book works with Julia and relies primarily on <a href="https://fluxml.ai/"><code>Flux.jl</code></a> <span class="citation" data-cites="innes2018flux">(<a href="references.html#ref-innes2018flux" role="doc-biblioref">Innes 2018</a>)</span>. The original book is written by Jeremy Howard and Sylvain Gugge <span class="citation" data-cites="howard2020deep">(<a href="references.html#ref-howard2020deep" role="doc-biblioref">Howard and Gugger 2020</a>)</span>. This book is written by participants of the <a href="https://www.deep-learning.club/">Julia for Deep Learning</a> course.</p>
-<p>The book is served from <a href="https://github.com/pat-alt/julia-deeplearning-book">GitHub</a>.</p>
-
-
-<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
-<div id="ref-howard2020deep" class="csl-entry" role="listitem">
-Howard, Jeremy, and Sylvain Gugger. 2020. <em>Deep <span>Learning</span> for <span>Coders</span> with Fastai and <span>PyTorch</span></em>. "O’Reilly Media, Inc.".
+<p>In this guide, we collect useful information for authors and contributors to the book.</p>
+<section id="local-rendering-instructions" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="local-rendering-instructions"><span class="header-section-number">4.1</span> Local rendering instructions</h2>
+<p>By default, the book is rendered automatically through GitHub actions when you merge to <code>main</code>. However, if you want to preview the book locally, you can do so by following these instructions:</p>
+<ol type="1">
+<li><p>Clone <a href="https://github.com/pat-alt/julia-deeplearning-book">the repo</a> for this book somewhere on your computer. Navigate using a terminal to the folder containing the repository.</p></li>
+<li><p>Add the Julia kernel to Jupyter. This is currently tested with Julia 1.9, your results may vary with different versions of julia.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the current environment</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Pkg; Pkg</span>.<span class="fu">activate</span>(<span class="st">"."</span>); <span class="bu">Pkg</span>.<span class="fu">instantiate</span>()</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Import IJulia</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">IJulia</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Call a notebook. You can close it once you call this --</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># we only need to run notebook() once for it to build the</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># jupyter kernel for Julia.</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">notebook</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div></li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
 </div>
-<div id="ref-innes2018flux" class="csl-entry" role="listitem">
-Innes, Mike. 2018. <span>“Flux: <span>Elegant</span> Machine Learning with <span>Julia</span>.”</span> <em>Journal of Open Source Software</em> 3 (25): 602.
+<div class="callout-title-container flex-fill">
+Troubleshooting
 </div>
 </div>
+<div class="callout-body-container callout-body">
+<p>If you get an error message about <code>jupyter</code> not being found, you may need to <code>build IJulia</code> first. This</p>
+</div>
+</div>
+<ol start="3" type="1">
+<li><p>Install <a href="https://quarto.org/docs/get-started/">Quarto</a>.</p></li>
+<li><p>Render the website from the root of this folder with</p>
+<pre><code>quarto render</code></pre></li>
+<li><p>Optionally, if you want to preview the HTML version of the page before you merge it to <code>main</code>, you can run</p>
+<pre><code>quarter preview</code></pre></li>
+</ol>
+
+
 </section>
 
 </main> <!-- /main -->
@@ -551,10 +557,13 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
+      <a href="./summary.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Summary</span></span>
+      </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./intro.html" class="pagination-link">
-        <span class="nav-page-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="./references.html" class="pagination-link">
+        <span class="nav-page-text">References</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
