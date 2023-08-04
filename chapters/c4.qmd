@@ -21,21 +21,19 @@ import Statistics
 
 # File paths:
 www_path = "www"
+data_path = joinpath("data", "mnist")
+
+
 ```
 
 Download MNIST dataset, and sepearate into training, validation and test sets:
 
 ```{julia}
-data_path = joinpath("data", "mnist")
-mkpath(data_path)
-
-## readdir(data_path) == [] && download("http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz", joinpath(data_path, "train-images-idx3-ubyte.gz"))
-
-```
-
-```{julia}
 
 function setup_directory(images, digits; path=data_path, subpath="")
+
+    isdir(data_path) || mkpath(data_path)
+
     group_digits = group_indices(digits)
 
     for (k, v) in group_digits
@@ -50,6 +48,8 @@ end
 ```
 
 ```{julia}
+
+## readdir(data_path) == [] && download("http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz", joinpath(data_path, "train-images-idx3-ubyte.gz"))
 
 X, y = MLDatasets.MNIST(:train)[:]
 setup_directory(X, y; subpath="train")
