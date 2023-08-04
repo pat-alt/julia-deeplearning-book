@@ -4,7 +4,8 @@
 #| echo: false
 #| output: false
 
-using Pkg; Pkg.activate(".")
+using Pkg;
+Pkg.activate(".");
 
 # Packages
 using DataFrames
@@ -16,10 +17,190 @@ using MLUtils
 using OneHotArrays
 using Plots
 import UnicodePlots
+import Statistics
 
 # File paths:
 www_path = "www"
 ```
+
+Download MNIST dataset, and sepearate into training, validation and test sets:
+
+```{julia}
+data_path = joinpath("data", "mnist")
+mkpath(data_path)
+
+## readdir(data_path) == [] && download("http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz", joinpath(data_path, "train-images-idx3-ubyte.gz"))
+
+```
+
+```{julia}
+
+function setup_directory(images, digits; path=data_path, subpath="")
+    group_digits = group_indices(digits)
+
+    for (k, v) in group_digits
+        mkpath(joinpath(path, subpath, string(k)))
+        for i in v
+            img = permutedims(images[:, :, i], (2, 1))
+            save(joinpath(path, subpath, string(k), string(i, ".png")), img)
+        end
+    end
+end
+
+```
+
+```{julia}
+
+X, y = MLDatasets.MNIST(:train)[:]
+setup_directory(X, y; subpath="train")
+
+Xtest, ytest = MLDatasets.MNIST(:test)[:]
+setup_directory(Xtest, ytest; subpath="test")
+
+```
+
+```{julia}
+
+threes = sort(readdir(joinpath(data_path, "train", "3")))
+sevens = sort(readdir(joinpath(data_path, "train", "7")))
+
+threes
+
+```
+
+```{julia}
+im3_path = joinpath(data_path, "train", "3", threes[1])
+im3 = load(joinpath(im3_path))
+
+```
+
+```{julia}
+
+im3_array = convert(Array{Int}, im3 * 255)
+im3_array[4:10, 4:10]
+
+```
+
+```{julia}
+
+seven_tensors = [load(joinpath(data_path, "train", "7", seven)) for seven in sevens]
+three_tensors = [load(joinpath(data_path, "train", "3", three)) for three in threes]
+size(seven_tensors), size(three_tensors)
+
+```
+
+```{julia}
+three_tensors[1]
+size(three_tensors[1])
+size(three_tensors)
+```
+
+## Computing Metrics Using Broadcasting
+
+The rule of broadcasting in Julia is different from Python? In Python, first align all dimensions to the right, then broadcast. In Julia, first align all dimensions to the left, then broadcast. So in python [1000, 28, 28] - [28, 28] is allowed, but in Julia, we need [28, 28, 1000] - [28, 28]. Use `permutedims` to change the order of dimensions.
+
+```{julia}
+
+stacked_sevens = stack(seven_tensors)
+stacked_threes = stack(three_tensors)
+#stacked_sevens = cat(seven_tensors..., dims=3) ## stackoverflow, too many ...
+#stacked_threes = cat(three_tensors[1:1000]..., dims=3) ## stackoverflow
+size(stacked_sevens), size(stacked_threes)
+
+```
+
+```{julia}
+
+mean3 = Statistics.mean(stacked_threes, dims=3)
+mean3 = mean3[:, :, 1]
+
+```
+
+```{julia}
+
+mean7 = Statistics.mean(stacked_sevens, dims=3)
+mean7 = mean7[:, :, 1]
+
+```
+
+```{julia}
+a_3 = stacked_threes[:, :, 1]
+dist_3_abs = Statistics.mean(abs.(a_3 .- mean3))
+dist_3_sqr = sqrt(Statistics.mean((a_3 .- mean3) .^ 2))
+dist_3_abs, dist_3_sqr
+
+```
+
+```{julia}
+Flux.Losses.mae(a_3, mean3), sqrt(Flux.Losses.mse(a_3, mean3))
+
+```
+
+```{julia}
+
+test_threes = sort(readdir(joinpath(data_path, "test", "3")))
+valid_3_tens = stack([load(joinpath(data_path, "test", "3", img)) for img in test_threes])
+
+test_sevens = sort(readdir(joinpath(data_path, "test", "7")))
+valid_7_tens = stack([load(joinpath(data_path, "test", "7", img)) for img in test_sevens])
+
+# valid_3_tens = permutedims(valid_3_tens, [3, 1, 2])
+
+size(valid_3_tens), size(valid_7_tens)
+
+```
+
+```{julia}
+
+function mnist_distance(a, b)
+    mm = Statistics.mean(Float32.(abs.(a .- b)), dims=(1, 2))
+    return dropdims(mm, dims=(1, 2))
+end
+
+mnist_distance(a_3, mean3)[1]
+
+```
+
+```{julia}
+
+valid_3_dist = mnist_distance(valid_3_tens, mean3)
+(size(valid_3_dist), valid_3_dist)
+
+```
+
+```{julia}
+size(valid_3_tens .- mean3)
+
+```
+
+```{julia}
+
+function is_3(x)
+    return mnist_distance(x, mean3) .< mnist_distance(x, mean7)
+end
+
+```
+
+```{julia}
+is_3(a_3)
+is_3(valid_3_tens[:, :, 1:10])
+
+is_3(valid_7_tens[:, :, 1:10])
+
+
+```
+
+```{julia}
+accuracy_3s = Statistics.mean(is_3(valid_3_tens))
+accuracy_7s = Statistics.mean(1 .- is_3(valid_7_tens))
+
+accuracy_3s, accuracy_7s
+
+```
+
+```{julia}
+```
+
 
 ## Calculating Gradients
 
@@ -43,31 +224,31 @@ xmax = 10
 n = 100
 plt = plot(
     range(-xmax, xmax, length=n), f;
-    label="f(x)", lw=5, xlim=1.5 .* [-xmax, xmax], 
-    xlab="Parameter", ylab="Loss",legend=false
+    label="f(x)", lw=5, xlim=1.5 .* [-xmax, xmax],
+    xlab="Parameter", ylab="Loss", legend=false
 )
 
 nsteps = 10
 lrs = [0.05, 0.3, 0.975, 1.025]
-descend(x;lr=0.1) = x - lr * df(x)
-x = [-0.75xmax]       
-x = repeat(x,length(lrs),1)                             # repeat x for each learning rate
+descend(x; lr=0.1) = x - lr * df(x)
+x = [-0.75xmax]
+x = repeat(x, length(lrs), 1)                             # repeat x for each learning rate
 plts = [deepcopy(plt) for i in 1:length(lrs)]           # repeat plt for each learning rate
 anim = @animate for j in 1:nsteps
-    global x = hcat(x, zeros(size(x,1)))                # add column of zeros to x
+    global x = hcat(x, zeros(size(x, 1)))                # add column of zeros to x
     for (i, lr) in enumerate(lrs)
-        _plt = plot(plts[i], title="lr = $lr", ylims=(0,f(xmax)), legend=false)
-        scatter!([x[i,j]], [f(x[i,j])]; label=nothing, ms=5, c=:red)    # plot current point
-        x[i,j+1] = descend(x[i,j]; lr=lr)                               # descend
-        Δx = x[i,j+1] - x[i,j]
-        Δy = f(x[i,j+1]) - f(x[i,j])
-        quiver!([x[i,j]],[f(x[i,j])],quiver=([Δx],[0]),c=:red)          # horizontal arrow
-        quiver!([x[i,j+1]],[f(x[i,j])],quiver=([0],[Δy]),c=:red)        # vertical arrow
+        _plt = plot(plts[i], title="lr = $lr", ylims=(0, f(xmax)), legend=false)
+        scatter!([x[i, j]], [f(x[i, j])]; label=nothing, ms=5, c=:red)    # plot current point
+        x[i, j+1] = descend(x[i, j]; lr=lr)                               # descend
+        Δx = x[i, j+1] - x[i, j]
+        Δy = f(x[i, j+1]) - f(x[i, j])
+        quiver!([x[i, j]], [f(x[i, j])], quiver=([Δx], [0]), c=:red)          # horizontal arrow
+        quiver!([x[i, j+1]], [f(x[i, j])], quiver=([0], [Δy]), c=:red)        # vertical arrow
         plts[i] = _plt
     end
     plot(
         plts..., legend=false,
-        plot_title="Step $j", margin = 5mm,
+        plot_title="Step $j", margin=5mm,
         dpi=300,
     )
 end
@@ -75,6 +256,121 @@ gif(anim, joinpath(www_path, "c4_gd.gif"), fps=0.5)
 ```
 
 ![Gradient descent for different learning rates](../www/c4_gd.gif){#fig-gd width="100%"}
+
+## An End-to-End SGD Example
+
+```{julia}
+
+## is time a good variable name?
+time = collect(range(start=0, stop=19))
+
+## The following doesn't work, @. is generating "rand.(20)"
+## speed = @. rand(20) * 3 .+ (0.75 * (time - 9.5)^2 + 1)
+
+speed = @. $rand(20) + 0.75 * (time - 9.5)^2 + 1
+
+scatter(time, speed, legend=false, xlabel="time", ylabel="speed")
+
+```
+
+```{julia}
+
+function f(t, params)
+    a, b, c = params
+    return @. a * (t - b)^2 + c
+end
+
+function mse(preds, targets)
+    return sum((preds .- targets) .^ 2) / length(preds)
+end
+
+```
+
+```{julia}
+
+function show_preds(preds)
+    scatter(time, speed)
+    scatter!(time, preds, color="red")
+end
+
+
+```
+
+
+```{julia}
+
+params = rand(3)
+preds = f(time, params)
+
+show_preds(preds)
+
+loss = mse(preds, speed)
+
+```
+
+```{julia}
+
+dloss(params) = gradient(params -> mse(f(time, params), speed), params)
+
+grad = dloss(params)[1]
+
+lr = 1e-5
+params = params .- lr .* grad
+
+preds = f(time, params)
+mse(preds, speed)
+
+show_preds(preds)
+
+```
+
+```{julia}
+
+function apply_step!(params; lr=1e-5, prn=true)
+    grad = dloss(params)[1]
+    params .-= lr * grad
+    loss = mse(f(time, params), speed)
+    if prn
+        println(loss)
+        println(grad)
+        println(params)
+    end
+    return preds
+end
+
+```
+
+```{julia}
+
+params = rand(3)
+plts = []
+
+for i in range(1, 4)
+    push!(plts, show_preds(apply_step!(params; lr=1e-2, prn=false)))
+end
+
+plot(
+    plts..., legend=false,
+    plot_title="First four steps", margin=5mm,
+    dpi=300,
+)
+```
+
+```{julia}
+params = rand(3)
+preds = f(time, params)
+
+apply_step!(params, prn=false);
+show_preds(preds)
+
+for i in range(0, 600000)
+    apply_step!(params, prn=false)
+end
+
+params, loss = apply_step!(params, prn=true);
+show_preds(f(time, params))
+
+```
 
 ## Training a Digit Classifier
 
@@ -86,20 +382,20 @@ X, y = MLDatasets.MNIST(:train)[:]
 y_enc = Flux.onehotbatch(y, 0:9)
 Xtest, ytest = MLDatasets.MNIST(:test)[:]
 ytest_enc = onehotbatch(ytest, 0:9)
-mosaic(map(i -> convert2image(MNIST, X[:,:,i]), rand(1:60000,100)), ncol=10)
+mosaic(map(i -> convert2image(MNIST, X[:, :, i]), rand(1:60000, 100)), ncol=10)
 ```
 
 We can preprocess the data as follows:
 
 ```{julia}
 i_train, i_val = [], []
-for (k,v) in group_indices(y)
+for (k, v) in group_indices(y)
     _i_train, _i_val = splitobs(v, at=0.7)
     push!(i_train, _i_train...)
     push!(i_val, _i_val...)
 end
-Xtrain, ytrain = X[:,:,i_train], y_enc[:,i_train]
-Xval, yval = X[:,:,i_val], y_enc[:,i_val]
+Xtrain, ytrain = X[:, :, i_train], y_enc[:, i_train]
+Xval, yval = X[:, :, i_val], y_enc[:, i_val]
 ```
 
 Next, we define a data loader:
@@ -128,7 +424,7 @@ Finally, what's left to do is to define a loss function and an optimiser:
 #| output: false
 
 loss(y_hat, y) = Flux.Losses.crossentropy(y_hat, y)
-opt_state = Flux.setup(Adam(),model)
+opt_state = Flux.setup(Adam(), model)
 ```
 
 Before we start training, we define some helper functions:
@@ -140,15 +436,15 @@ Before we start training, we define some helper functions:
 # Callbacks:
 function accuracy(model, data::DataLoader)
     acc = 0
-    for (x,y) in data
-        acc += sum(onecold(model(x)) .== onecold(y)) / size(y,2)
+    for (x, y) in data
+        acc += sum(onecold(model(x)) .== onecold(y)) / size(y, 2)
     end
     return acc / length(data)
 end
 
 function avg_loss(model, data::DataLoader)
     _loss = 0
-    for (x,y) in data
+    for (x, y) in data
         _loss += loss(model(x), y)[1]
     end
     return _loss / length(data)
@@ -220,9 +516,9 @@ for epoch in 1:nepochs
 
     # Print progress:
     results_df = DataFrame(log)
-    vals = Matrix(results_df[2:end,[:loss_train,:loss_val]])
-    plt = UnicodePlots.lineplot(1:epoch, vals; 
-        name=["Train","Validation"], title="Loss in epoch $epoch", xlim=(1,nepochs))
+    vals = Matrix(results_df[2:end, [:loss_train, :loss_val]])
+    plt = UnicodePlots.lineplot(1:epoch, vals;
+        name=["Train", "Validation"], title="Loss in epoch $epoch", xlim=(1, nepochs))
     UnicodePlots.display(plt)
 
 end
@@ -236,14 +532,14 @@ end
 #| output: false
 
 output = DataFrame(log)
-output = output[2:end,:]
+output = output[2:end, :]
 
 anim = @animate for epoch in 1:maximum(output.epoch)
-    p_loss = plot(output[1:epoch,:epoch], Matrix(output[1:epoch,[:loss_train,:loss_val]]), 
+    p_loss = plot(output[1:epoch, :epoch], Matrix(output[1:epoch, [:loss_train, :loss_val]]),
         label=["Train" "Validation"], title="Loss", legend=:topleft)
-    p_acc = plot(output[1:epoch,:epoch], Matrix(output[1:epoch,[:acc_train,:acc_val]]), 
+    p_acc = plot(output[1:epoch, :epoch], Matrix(output[1:epoch, [:acc_train, :acc_val]]),
         label=["Train" "Validation"], title="Accuracy", legend=:topleft)
-    plot(p_loss, p_acc, layout=(1,2), dpi=300, margin=5mm, size=(800,400))
+    plot(p_loss, p_acc, layout=(1, 2), dpi=300, margin=5mm, size=(800, 400))
 end
 gif(anim, joinpath(www_path, "c4_mnist.gif"), fps=5)
 ```
