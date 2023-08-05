@@ -286,10 +286,12 @@ gif(anim, joinpath(www_path, "c4_gd.gif"), fps=0.5)
 ## is time a good variable name?
 time = collect(range(start=0, stop=19))
 
-## The following doesn't work, @. is generating "rand.(20)"
+## The following doesn't work, 
+##  @. is generating "rand.(20)", which is a vector of one element of vectors of 20 random numbers 
 ## speed = @. rand(20) * 3 .+ (0.75 * (time - 9.5)^2 + 1)
 
 speed = @. $rand(20) + 0.75 * (time - 9.5)^2 + 1
+speed = @. rand(20)[1] + 0.75 * (time - 9.5)^2 + 1
 
 scatter(time, speed, legend=false, xlabel="time", ylabel="speed")
 
@@ -350,7 +352,7 @@ show_preds(preds)
 ## params will be updated in place
 function apply_step!(params; lr=1e-5, prn=true)
     grad = dloss(params)[1]
-    params .-= lr * grad
+    params .-= lr * grad ## inplace update
     loss = mse(f(time, params), speed)
     if prn
         println(loss)
