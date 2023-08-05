@@ -512,7 +512,7 @@ function reformat_dl(d1)
     return xb, yb
 end
 
-dl = DataLoader(dset, batchsize=256)
+dl = DataLoader(dset, batchsize=256, shuffle=true)
 
 d1 = first(dl)
 length(d1)
@@ -524,9 +524,10 @@ size(xb), size(yb)
 ```
 
 ```{julia}
+
 valid_dset = [(valid_x[i, :], valid_y[i]) for i in range(1, size(valid_x)[1])]
 
-valid_dl = DataLoader(valid_dset, batchsize=256)
+valid_dl = DataLoader(valid_dset, batchsize=256, shuffle=true)
 
 ```
 
@@ -553,16 +554,26 @@ end
 ```
 
 ```{julia}
+params = Dict("weights" => weights, "bias" => bias)
+
+linear1(xb, params) = xb * params["weights"] .+ params["bias"]
+
+curr_gr = gradient(params) do params
+    preds = linear1(batch, params)
+    mnist_loss(preds, train_y[1:4])
+end
+
+```
+```{julia}
 
 lr = 1e-4
 function calc_grad(xb, yb, model, weights, bias)
     preds = model(xb, weights, bias)
     loss = mnist_loss(preds, yb)
     curr_gr = gradient(weights, bias) do weights, bias
-        preds = model(batch, weights, bias)
+        preds = model(xb, weights, bias)
         mnist_loss(preds, yb)
     end
-    return curr_gr
 end
 
 
@@ -572,30 +583,24 @@ Using params dictionary?
 
 ```{julia}
 
-params = Dict("weights" => weights, "bias" => bias)
-
-linear1(xb, params) = xb * params["weights"] .+ params["bias"]
-preds = linear1(batch, params)
-
 function calc_grad(xb, yb, model, params)
     preds = model(xb, params)
     loss = mnist_loss(preds, yb)
     curr_gr = gradient(params) do params
-        preds = model(batch, params)
+        preds = model(xb, params)
         mnist_loss(preds, yb)
     end
 end
-
 
 ```
 ```{julia}
 
 curr_grad = calc_grad(batch, train_y[1:4], linear1, weights, bias)
-dict_grad = calc_grad(batch, train_y[1:4], linear1, params)
+dict_grad = calc_grad(batch, train_y[1:4], linear1, params)[1]
 ## weights.grad.mean(),bias.grad
 
 mean(curr_grad[1]), mean(curr_grad[2])
-mean(dict_grad[1]["weights"]), mean(dict_grad[1]["bias"])
+mean(dict_grad["weights"]), mean(dict_grad["bias"])
 
 ```
 
@@ -603,15 +608,16 @@ mean(dict_grad[1]["weights"]), mean(dict_grad[1]["bias"])
 
 function train_epoch(model, lr, params)
     for dd in dl
-        println(size(dd))
         xb, yb = reformat_dl(dd)
-        calc_grad(xb, yb, model, params)
+        grad = calc_grad(xb, yb, model, params)[1]
         for k in keys(params)
-            params[k] .-= params[k] * lr
+            params[k] .-= grad[k] * lr
             ## p.grad.zero_()
         end
     end
 end
+
+train_epoch(linear1, lr, params)
 
 ```
 
@@ -630,14 +636,10 @@ function batch_accuracy(xb, yb)
     return mean(correct)
 end
 
-```
-
-
-```{julia}
-
 batch_accuracy(linear1(batch, params), train_y[1:4])
 
 ```
+
 
 
 ```{julia}
@@ -648,6 +650,18 @@ function validate_epoch(model)
     for dd in valid_dl
         xb, yb = reformat_dl(dd)
         accs[i] = batch_accuracy(model(xb, params), yb)
+        i = i + 1
+    end
+    return round(mean(accs), digits=4)
+end
+
+function train_accuracy(model)
+    accs = zeros(length(dl))
+    i = 1
+    for dd in dl
+        xb, yb = reformat_dl(dd)
+        accs[i] = batch_accuracy(model(xb, params), yb)
+        i = i + 1
     end
     return round(mean(accs), digits=4)
 end
@@ -656,22 +670,30 @@ end
 
 ```{julia}
 
-lr = 1.
+lr = 1
+
+weights = init_params((28*28,1))
+bias = init_params(1)
+
 params = Dict("weights" => weights, "bias" => bias)
 
-train_epoch(linear1, lr, params)
+train_epoch(linear1_p, lr, params)
 
 validate_epoch(linear1)
 
 ```
 
+
 ```{julia}
 
-for i in range(20):
+for i in range(1, 20)
     train_epoch(linear1, lr, params)
-    print(validate_epoch(linear1), end=' ')
+    print((validate_epoch(linear1), train_accuracy(linear1)))
+end
+
 
 ```
+
 
 ## Creating an Optimizer
 
