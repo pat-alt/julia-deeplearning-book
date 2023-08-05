@@ -353,7 +353,8 @@ show_preds(preds)
 function apply_step!(params; lr=1e-5, prn=true)
     grad = dloss(params)[1]
     params .-= lr * grad ## inplace update
-    loss = mse(f(time, params), speed)
+    preds = f(time, params)
+    loss = mse(preds, speed)
     if prn
         println(loss)
         println(grad)
@@ -370,7 +371,7 @@ params = rand(3)
 plts = []
 
 for i in range(1, 4)
-    push!(plts, show_preds(apply_step!(params; lr=1e-2, prn=false)))
+    push!(plts, show_preds(apply_step!(params; lr=0.01, prn=false)))
 end
 
 plot(
@@ -384,15 +385,22 @@ plot(
 params = rand(3)
 preds = f(time, params)
 
-apply_step!(params, prn=false);
-show_preds(preds)
+plts = []
+push!(plts, show_preds(preds))
 
-for i in range(0, 600000)
+lr = 0.0001
+for i in range(0, 60000)
     apply_step!(params, prn=false)
 end
 
-params, loss = apply_step!(params, prn=true);
-show_preds(f(time, params))
+preds = apply_step!(params, prn=true);
+push!(plts, show_preds(preds))
+
+plot(
+    plts..., legend=false,
+    plot_title="After 60000 steps", margin=5mm,
+    dpi=300,
+)
 
 ```
 
