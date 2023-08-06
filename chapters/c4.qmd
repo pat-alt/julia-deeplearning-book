@@ -770,9 +770,9 @@ mean((out2[1,:] .> 0.5) .== yb)
 ```{julia}
 
 function simple_net1(xb)
-    res = xb * w1 + b1'
+    res = xb * w1 .+ b1'
     res[res .< 0] .= 0 
-    res = res * w2 + b2'
+    res = res * w2 .+ b2
     return res
 end
 
@@ -781,9 +781,11 @@ b1 = init_params(30)
 w2 = init_params((30,1))
 b2 = init_params(1)
 
-simple_net1(train_x[1:4,:]')
+simple_net1(train_x[1:4,:])
 
 ```
+
+
 
 ```{julia}
 plot(range(-5, 5), Flux.relu)
@@ -797,6 +799,12 @@ simple_net_flux = Chain(
     Flux.relu,
     Flux.Dense(30,1)
 )
+
+Flux.params(simple_net_flux[1])[1] .= w1'
+Flux.params(simple_net_flux[1])[2] .= b1
+
+Flux.params(simple_net_flux[3])[1] .= w2'
+Flux.params(simple_net_flux[3])[2] .= b2
 
 simple_net_flux(train_x[1:4,:]')
 
