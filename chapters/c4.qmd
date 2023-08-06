@@ -529,6 +529,8 @@ collect(dl)
 
 ```
 
+Does dataloader work with files and directories?
+
 ```{julia}
 
 weights = init_params((28*28,1))
@@ -624,8 +626,8 @@ function calc_grad(xb, yb, model, params)
         mnist_loss(preds, yb)
     end
 end
-
 ```
+
 ```{julia}
 
 curr_grad = calc_grad(batch, train_y[1:4], linear1, weights, bias)
@@ -730,12 +732,79 @@ end
 
 ## Creating an Optimizer
 
+A Flux based implementation
 
 ```{julia}
-linear1 = Flux.Dense(28*28,1)
+
+linear_flux = Chain(
+    Dense(28*28 => 1),
+    Flux.sigmoid
+)
+optim = Flux.setup(Flux.Adam(1.0), model)
+
+losses = []
+
+for epoch in 1:20
+    for dd in dl
+        xb, yb = reformat_dl(dd)
+        loss, grads = Flux.withgradient(linear_flux) do m
+            # Evaluate model and loss inside gradient context:
+            y_hat = m(xb')
+            Flux.binarycrossentropy(y_hat, yb')  # mnist_loss(y_hat', yb)
+        end
+        Flux.update!(optim, model, grads[1])
+        push!(losses, loss)  # logging, outside gradient context
+    end
+end
+
+optim # parameters, momenta and output have all changed
+out2 = model(xb')  # first row is prob. of true, second row p(false)
+
+mean((out2[1,:] .> 0.5) .== yb)
+
 ```
+
+
 ## Adding a Nonlinearity
 
+```{julia}
+
+function simple_net1(xb)
+    res = xb * w1 + b1'
+    res[res .< 0] .= 0 
+    res = res * w2 + b2'
+    return res
+end
+
+w1 = init_params((28*28,30))
+b1 = init_params(30)
+w2 = init_params((30,1))
+b2 = init_params(1)
+
+simple_net1(train_x[1:4,:]')
+
+```
+
+```{julia}
+plot(range(-5, 5), Flux.relu)
+
+```
+
+```{julia}
+
+simple_net_flux = Chain(
+    Flux.Dense(28*28,30),
+    Flux.relu,
+    Flux.Dense(30,1)
+)
+
+simple_net_flux(train_x[1:4,:]')
+
+```
+
+```{julia}
+
+```
 ## Training a Digit Classifier
 
 The MNIST dataset can be loaded in Julia as follows:
