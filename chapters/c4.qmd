@@ -388,7 +388,7 @@ preds = f(time, params)
 plts = []
 push!(plts, show_preds(preds))
 
-lr = 0.0001
+lr = 0.01  ## how to adjust learning rate? takes a lot of time to converge
 for i in range(0, 60000)
     apply_step!(params, prn=false)
 end
@@ -738,7 +738,7 @@ A Flux based implementation
 
 linear_flux = Chain(
     Dense(28*28 => 1),
-    Flux.sigmoid
+    Flux.sigmoid  ## or σ
 )
 optim = Flux.setup(Flux.Adam(1.0), model)
 
