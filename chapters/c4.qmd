@@ -388,7 +388,7 @@ preds = f(time, params)
 plts = []
 push!(plts, show_preds(preds))
 
-lr = 0.01  ## how to adjust learning rate? takes a lot of time to converge
+lr = 0.01  ## how to adjust learning rate? takes a lot of time to learn
 for i in range(0, 60000)
     apply_step!(params, prn=false)
 end
