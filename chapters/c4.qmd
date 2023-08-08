@@ -292,6 +292,7 @@ time = collect(range(start=0, stop=19))
 
 speed = @. $rand(20) + 0.75 * (time - 9.5)^2 + 1
 speed = @. rand(20)[1] + 0.75 * (time - 9.5)^2 + 1
+speed = rand(20) + @. 0.75 * (time - 9.5)^2 + 1
 
 scatter(time, speed, legend=false, xlabel="time", ylabel="speed")
 
