@@ -811,9 +811,6 @@ simple_net_flux(train_x[1:4,:]')
 
 ```
 
-```{julia}
-
-```
 ## Training a Digit Classifier
 
 The MNIST dataset can be loaded in Julia as follows:
