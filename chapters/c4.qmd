@@ -927,17 +927,17 @@ As a very last step, we set up our training logs:
 
 # Final setup:
 nepochs = 100
-log = []
 acc_train, acc_val = accuracy(model, train_set), accuracy(model, val_set)
 loss_train, loss_val = avg_loss(model, train_set), avg_loss(model, val_set)
-results = Dict(
-    :epoch => 0,
-    :acc_train => acc_train,
-    :acc_val => acc_val,
-    :loss_train => loss_train,
-    :loss_val => loss_val
+
+log = DataFrame(
+    epoch=0,
+    acc_train=acc_train,
+    acc_val=acc_val,
+    loss_train=loss_train,
+    loss_val=loss_val
 )
-push!(log, results)
+
 ```
 
 Below we finally train our model:
@@ -983,10 +983,9 @@ for epoch in 1:nepochs
     push!(log, results)
 
     # Print progress:
-    results_df = DataFrame(log)
-    vals = Matrix(results_df[2:end, [:loss_train, :loss_val]])
-    plt = UnicodePlots.lineplot(1:epoch, vals;
-        name=["Train", "Validation"], title="Loss in epoch $epoch", xlim=(1, nepochs))
+    vals = Matrix(results_df[2:end,[:loss_train,:loss_val]])
+    plt = UnicodePlots.lineplot(1:epoch, vals; 
+        name=["Train","Validation"], title="Loss in epoch $epoch", xlim=(1,nepochs))
     UnicodePlots.display(plt)
 
 end
