@@ -220,9 +220,6 @@ accuracy_3s, accuracy_7s
 
 ```
 
-```{julia}
-```
-
 
 ## Calculating Gradients
 
