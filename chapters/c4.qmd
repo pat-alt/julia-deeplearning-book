@@ -4,7 +4,8 @@
 #| echo: false
 #| output: false
 
-using Pkg; Pkg.activate(".")
+using Pkg;
+Pkg.activate(".");
 
 # Packages
 using DataFrames
@@ -15,11 +16,218 @@ using MLDatasets
 using MLUtils
 using OneHotArrays
 using Plots
+using Statistics
+
 import UnicodePlots
 
 # File paths:
 www_path = "www"
+data_path = joinpath("data", "mnist")
+
+
 ```
+
+Download MNIST dataset, and sepearate into training, validation and test sets:
+
+```{julia}
+#| echo: false
+
+function setup_directory(images, digits; path=data_path, subpath="")
+
+    isdir(data_path) || mkpath(data_path)
+
+    group_digits = group_indices(digits)
+
+    for (k, v) in group_digits
+        mkpath(joinpath(path, subpath, string(k)))
+        for i in v
+            img = permutedims(images[:, :, i], (2, 1))
+            save(joinpath(path, subpath, string(k), string(i, ".png")), img)
+        end
+    end
+end
+
+## readdir(data_path) == [] && download("http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz", joinpath(data_path, "train-images-idx3-ubyte.gz"))
+
+X, y = MLDatasets.MNIST(:train)[:]
+setup_directory(X, y; subpath="train")
+
+Xtest, ytest = MLDatasets.MNIST(:test)[:]
+setup_directory(Xtest, ytest; subpath="test")
+
+```
+
+```{julia}
+
+threes = sort(readdir(joinpath(data_path, "train", "3")))
+sevens = sort(readdir(joinpath(data_path, "train", "7")))
+
+threes
+
+```
+
+```{julia}
+im3_path = joinpath(data_path, "train", "3", threes[1])
+im3 = load(joinpath(im3_path))
+
+```
+
+```{julia}
+
+im3_array = convert(Array{Int}, im3 * 255)
+im3_array[4:10, 4:10]
+
+```
+
+```{julia}
+
+seven_tensors = [load(joinpath(data_path, "train", "7", seven)) for seven in sevens]
+three_tensors = [load(joinpath(data_path, "train", "3", three)) for three in threes]
+size(seven_tensors), size(three_tensors)
+
+```
+
+```{julia}
+three_tensors[1]
+size(three_tensors[1])
+size(three_tensors)
+```
+
+
+```{julia}
+
+stacked_sevens = stack(seven_tensors)
+stacked_threes = stack(three_tensors)
+size(stacked_sevens), size(stacked_threes)
+
+```
+
+
+Alternatively one can create seven_tensors and three_tensors directly from MLUDatasets:
+
+```{julia}
+
+dataset = MLDatasets.MNIST(:train)
+
+stacked_sevens = dataset.features[:, :, dataset.targets.==7]
+stacked_threes = dataset.features[:, :, dataset.targets.==3]
+
+size(stacked_sevens), size(stacked_threes)
+
+```
+
+```{julia}
+# length(size(stacked_threes))
+ndims(stacked_threes)
+```
+
+```{julia}
+### need to transpose the dimensions
+
+stacked_sevens = permutedims(stacked_sevens, [2, 1, 3])
+stacked_threes = permutedims(stacked_threes, [2, 1, 3])
+
+convert(Array{Gray}, hcat(stacked_sevens[:, :, 1], stacked_threes[:, :, 1]))
+
+```
+
+
+
+```{julia}
+
+mean3 = mean(stacked_threes, dims=3)
+mean3 = mean3[:, :, 1]
+
+convert(Array{Gray}, mean3)
+
+```
+
+```{julia}
+
+mean7 = mean(stacked_sevens, dims=3)
+mean7 = mean7[:, :, 1]
+
+convert(Array{Gray}, mean7)
+
+```
+
+```{julia}
+a_3 = stacked_threes[:, :, 1]
+dist_3_abs = mean(abs.(a_3 .- mean3))
+dist_3_sqr = sqrt(mean((a_3 .- mean3) .^ 2))
+dist_3_abs, dist_3_sqr
+
+```
+
+```{julia}
+Flux.Losses.mae(a_3, mean3), sqrt(Flux.Losses.mse(a_3, mean3))
+
+```
+
+## Computing Metrics Using Broadcasting
+
+The rule of broadcasting in Julia is different from Python? In Python, first align all dimensions to the right, then broadcast. In Julia, first align all dimensions to the left, then broadcast. So in python [1000, 28, 28] - [28, 28] is allowed, but in Julia, we need [28, 28, 1000] - [28, 28]. Use `permutedims` to change the order of dimensions.
+
+```{julia}
+
+valid_threes = sort(readdir(joinpath(data_path, "test", "3")))
+valid_3_tens = stack([load(joinpath(data_path, "test", "3", img)) for img in valid_threes])
+
+valid_sevens = sort(readdir(joinpath(data_path, "test", "7")))
+valid_7_tens = stack([load(joinpath(data_path, "test", "7", img)) for img in valid_sevens])
+
+# valid_3_tens = permutedims(valid_3_tens, [3, 1, 2])
+
+size(valid_3_tens), size(valid_7_tens)
+
+```
+
+```{julia}
+
+function mnist_distance(a, b)
+    mm = mean(Float32.(abs.(a .- b)), dims=(1, 2))
+    return dropdims(mm, dims=(1, 2))
+end
+
+mnist_distance(a_3, mean3)[1]
+
+```
+
+```{julia}
+
+valid_3_dist = mnist_distance(valid_3_tens, mean3)
+(size(valid_3_dist), valid_3_dist)
+
+```
+
+```{julia}
+size(valid_3_tens .- mean3)
+
+```
+
+```{julia}
+
+is_3(x) = mnist_distance(x, mean3) .< mnist_distance(x, mean7)
+
+```
+
+```{julia}
+is_3(a_3)
+is_3(valid_3_tens[:, :, 1:10])
+
+is_3(valid_7_tens[:, :, 1:10])
+
+
+```
+
+```{julia}
+accuracy_3s = mean(is_3(valid_3_tens))
+accuracy_7s = mean(1 .- is_3(valid_7_tens))
+
+accuracy_3s, accuracy_7s
+
+```
+
 
 ## Calculating Gradients
 
@@ -43,31 +251,31 @@ xmax = 10
 n = 100
 plt = plot(
     range(-xmax, xmax, length=n), f;
-    label="f(x)", lw=5, xlim=1.5 .* [-xmax, xmax], 
-    xlab="Parameter", ylab="Loss",legend=false
+    label="f(x)", lw=5, xlim=1.5 .* [-xmax, xmax],
+    xlab="Parameter", ylab="Loss", legend=false
 )
 
 nsteps = 10
 lrs = [0.05, 0.3, 0.975, 1.025]
-descend(x;lr=0.1) = x - lr * df(x)
-x = [-0.75xmax]       
-x = repeat(x,length(lrs),1)                             # repeat x for each learning rate
+descend(x; lr=0.1) = x - lr * df(x)
+x = [-0.75xmax]
+x = repeat(x, length(lrs), 1)                             # repeat x for each learning rate
 plts = [deepcopy(plt) for i in 1:length(lrs)]           # repeat plt for each learning rate
 anim = @animate for j in 1:nsteps
-    global x = hcat(x, zeros(size(x,1)))                # add column of zeros to x
+    global x = hcat(x, zeros(size(x, 1)))                # add column of zeros to x
     for (i, lr) in enumerate(lrs)
-        _plt = plot(plts[i], title="lr = $lr", ylims=(0,f(xmax)), legend=false)
-        scatter!([x[i,j]], [f(x[i,j])]; label=nothing, ms=5, c=:red)    # plot current point
-        x[i,j+1] = descend(x[i,j]; lr=lr)                               # descend
-        Δx = x[i,j+1] - x[i,j]
-        Δy = f(x[i,j+1]) - f(x[i,j])
-        quiver!([x[i,j]],[f(x[i,j])],quiver=([Δx],[0]),c=:red)          # horizontal arrow
-        quiver!([x[i,j+1]],[f(x[i,j])],quiver=([0],[Δy]),c=:red)        # vertical arrow
+        _plt = plot(plts[i], title="lr = $lr", ylims=(0, f(xmax)), legend=false)
+        scatter!([x[i, j]], [f(x[i, j])]; label=nothing, ms=5, c=:red)    # plot current point
+        x[i, j+1] = descend(x[i, j]; lr=lr)                               # descend
+        Δx = x[i, j+1] - x[i, j]
+        Δy = f(x[i, j+1]) - f(x[i, j])
+        quiver!([x[i, j]], [f(x[i, j])], quiver=([Δx], [0]), c=:red)          # horizontal arrow
+        quiver!([x[i, j+1]], [f(x[i, j])], quiver=([0], [Δy]), c=:red)        # vertical arrow
         plts[i] = _plt
     end
     plot(
         plts..., legend=false,
-        plot_title="Step $j", margin = 5mm,
+        plot_title="Step $j", margin=5mm,
         dpi=300,
     )
 end
@@ -75,6 +283,562 @@ gif(anim, joinpath(www_path, "c4_gd.gif"), fps=0.5)
 ```
 
 ![Gradient descent for different learning rates](../www/c4_gd.gif){#fig-gd width="100%"}
+
+## An End-to-End SGD Example
+
+```{julia}
+
+## is time a good variable name?
+time = collect(range(start=0, stop=19))
+
+speed = @. $rand(20) + 0.75 * (time - 9.5)^2 + 1
+
+scatter(time, speed, legend=false, xlabel="time", ylabel="speed")
+
+```
+
+```{julia}
+
+function f(t, params)
+    a, b, c = params
+    return @. a * (t - b)^2 + c
+end
+
+function mse(preds, targets)
+    return sum((preds .- targets) .^ 2) / length(preds)
+end
+
+```
+
+```{julia}
+
+function show_preds(preds)
+    scatter(time, speed)
+    scatter!(time, preds, color="red")
+end
+
+
+```
+
+
+```{julia}
+
+params = rand(3)
+preds = f(time, params)
+
+show_preds(preds)
+
+```
+
+```{julia}
+loss = mse(preds, speed)
+
+```
+```{julia}
+
+dloss(params) = gradient(params -> mse(f(time, params), speed), params)
+
+grad = dloss(params)[1]
+
+lr = 1e-5
+params = params .- lr .* grad
+
+preds = f(time, params)
+mse(preds, speed)
+
+show_preds(preds)
+
+```
+
+```{julia}
+## params will be updated in place
+function apply_step!(params; lr=1e-5, prn=true)
+    grad = dloss(params)[1]
+    params .-= lr * grad ## inplace update
+    preds = f(time, params)
+    loss = mse(preds, speed)
+    if prn
+        println(loss)
+        println(grad)
+        println(params)
+    end
+    return preds
+end
+
+```
+
+```{julia}
+
+params = rand(3)
+plts = []
+
+for i in range(1, 4)
+    push!(plts, show_preds(apply_step!(params; lr=0.0001, prn=false)))
+end
+
+plot(
+    plts..., legend=false,
+    plot_title="First four steps", margin=5mm,
+    dpi=300,
+)
+```
+
+```{julia}
+params = rand(3)
+preds = f(time, params)
+
+plts = []
+push!(plts, show_preds(preds))
+
+lr = 0.0001  ## how to adjust learning rate? takes a lot of time to learn
+for i in range(0, 60000)
+    apply_step!(params, prn=false)
+end
+
+preds = apply_step!(params, prn=true);
+push!(plts, show_preds(preds))
+
+plot(
+    plts..., legend=false,
+    plot_title="After 60000 steps", margin=5mm,
+    dpi=300,
+)
+
+```
+
+
+## The MNIST Loss Function
+
+```{julia}
+
+train_x = cat(stacked_threes, stacked_sevens, dims=3) |> x -> reshape(x, 28 * 28, :) |> transpose;
+train_y = vcat(repeat([1], size(stacked_threes)[3]), repeat([0], size(stacked_sevens)[3]));
+
+size(train_x), size(train_y)
+
+```
+
+```{julia}
+dset = [(train_x[i, :], train_y[i]) for i in range(1, size(train_x)[1])]
+x, y = dset[1]
+size(dset), size(x), y
+
+```
+
+```{julia}
+valid_x = cat(valid_3_tens, valid_7_tens, dims=3) |> x -> reshape(x, 28 * 28, :) |> transpose;
+valid_y = vcat(repeat([1], size(valid_3_tens)[3]), repeat([0], size(valid_7_tens)[3]));
+valid_dset = zip(eachrow(valid_x), valid_y);
+
+size(valid_x), size(valid_y), size(valid_dset)
+
+```
+
+```{julia}
+init_params(size; std=1.0) = randn(size) * std
+
+weights = init_params((28 * 28, 1))
+
+bias = init_params(1)
+
+size(weights), size(bias)
+```
+
+```{julia}
+
+train_x = convert(Array{Float32}, train_x)
+
+train_x[1:1, :] * weights .+ bias
+
+```
+
+Pytorch tensor provides a tag to indicate if gradient is to be computed.
+This is not needed in Flux? To get gradient, just use gradient function in Flux
+
+```{julia}
+gradient(weights -> sum(train_x[1:1, :] * weights), weights)
+
+```
+```{julia}
+
+linear1(xb) = xb * weights .+ bias
+preds = linear1(train_x)
+
+```
+
+```{julia}
+corrects = (preds .> 0.0) .=== Bool.(train_y)
+
+mean(corrects)
+
+```
+
+```{julia}
+
+weights[1] *= 1.0001
+
+preds = linear1(train_x)
+mean((preds .> 0.0) .== Bool.(train_y))
+
+```
+
+```{julia}
+
+trgts = [1, 0, 1]
+prds = [0.9, 0.4, 0.2]
+
+mnist_loss(predictions, targets) = mean(t === 1 ? 1 - p : p for (p, t) in zip(predictions, targets))
+
+mnist_loss(prds, trgts), mnist_loss([0.9, 0.4, 0.8], trgts)
+
+```
+
+```{julia}
+sigmoid(x) = 1 / (1 + exp(-x))
+
+print(sigmoid.(rand(10)))
+
+plot(range(-5, 5, length=100), sigmoid)
+
+```
+```{julia}
+
+function mnist_loss(predictions, targets)
+    predictions = sigmoid.(predictions)
+    return mean([t === 1 ? 1 - p : p for (p, t) in zip(predictions, targets)])
+end
+
+```
+
+## SGD and Mini-Batches
+
+```{julia}
+
+coll = range(1, 15)
+
+dl = DataLoader((coll), batchsize=5, shuffle=true)
+
+collect(dl)
+
+```
+
+```{julia}
+
+lowercase_alphabets = 'a':'z' ## [Char(i) for i in 97:122]
+
+ds = [ (i, v) for (i, v) in enumerate(lowercase_alphabets)]
+
+dl = DataLoader(ds, batchsize=5, shuffle=true)
+collect(dl)
+
+```
+
+Does dataloader work with files and directories?
+
+```{julia}
+
+weights = init_params((28*28,1))
+bias = init_params(1)
+size(weights), size(bias)
+
+```
+
+```{julia}
+
+function reformat_dl(d1) 
+    xb = stack([x for (x, y) in d1], dims=1)
+    yb = stack([[y] for (x, y) in d1], dims=1)
+    return xb, yb
+end
+
+dl = DataLoader(dset, batchsize=256, shuffle=true)
+
+d1 = first(dl)
+length(d1)
+
+xb, yb = reformat_dl(d1)
+
+size(xb), size(yb)
+
+```
+
+```{julia}
+
+valid_x = convert(Array{Float32}, valid_x)
+
+valid_dset = [(valid_x[i, :], valid_y[i]) for i in range(1, size(valid_x)[1])]
+
+valid_dl = DataLoader(valid_dset, batchsize=256, shuffle=true)
+
+```
+
+```{julia}
+
+batch = train_x[1:4, :]
+size(batch)
+
+preds = linear1(batch)
+
+loss = mnist_loss(preds, train_y[1:4])
+
+## redefine linear layer to include weights and bias as parameters
+
+linear1(xb, weights, bias) = xb * weights .+ bias
+preds = linear1(batch, weights, bias)
+
+curr_gr = gradient(weights, bias) do weights, bias
+    preds = linear1(batch, weights, bias)
+    mnist_loss(preds, train_y[1:4])
+end
+
+```
+
+```{julia}
+# using dictionary to store parameters
+
+params = Dict("weights" => weights, "bias" => bias)
+
+linear1(xb, params) = xb * params["weights"] .+ params["bias"]
+
+curr_gr = gradient(params) do params
+    preds = linear1(batch, params)
+    mnist_loss(preds, train_y[1:4])
+end
+
+```
+```{julia}
+
+lr = 1e-4
+function calc_grad(xb, yb, model, weights, bias)
+    preds = model(xb, weights, bias)
+    loss = mnist_loss(preds, yb)
+    curr_gr = gradient(weights, bias) do weights, bias
+        preds = model(xb, weights, bias)
+        mnist_loss(preds, yb)
+    end
+end
+
+
+```
+
+Using params dictionary.
+
+```{julia}
+
+function calc_grad(xb, yb, model, params)
+    preds = model(xb, params)
+    loss = mnist_loss(preds, yb)
+    curr_gr = gradient(params) do params
+        preds = model(xb, params)
+        mnist_loss(preds, yb)
+    end
+end
+```
+
+```{julia}
+
+curr_grad = calc_grad(batch, train_y[1:4], linear1, weights, bias)
+dict_grad = calc_grad(batch, train_y[1:4], linear1, params)[1]
+## weights.grad.mean(),bias.grad
+
+mean(curr_grad[1]), mean(curr_grad[2])
+mean(dict_grad["weights"]), mean(dict_grad["bias"])
+
+```
+
+```{julia}
+
+function train_epoch(model, lr, params)
+    for dd in dl
+        xb, yb = reformat_dl(dd)
+        grad = calc_grad(xb, yb, model, params)[1]
+        for k in keys(params)
+            params[k] .-= grad[k] * lr
+            ## no need to zero_grad? in Pytorch, p.grad.zero_()
+        end
+    end
+end
+
+train_epoch(linear1, lr, params)
+
+```
+
+```{julia}
+
+(preds .> 0.0) == Bool.(train_y[1:4])
+
+```
+
+
+```{julia}
+
+function batch_accuracy(xb, yb)
+    preds = sigmoid.(xb)
+    correct = (preds .> 0.5) .== yb
+    return mean(correct)
+end
+
+batch_accuracy(linear1(batch, params), train_y[1:4])
+
+```
+
+
+
+```{julia}
+
+function validate_epoch(model)
+    accs = zeros(length(valid_dl))
+    i = 1
+    for dd in valid_dl
+        xb, yb = reformat_dl(dd)
+        accs[i] = batch_accuracy(model(xb, params), yb)
+        i = i + 1
+    end
+    return round(mean(accs), digits=4)
+end
+
+function train_accuracy(model)
+    accs = zeros(length(dl))
+    i = 1
+    for dd in dl
+        xb, yb = reformat_dl(dd)
+        accs[i] = batch_accuracy(model(xb, params), yb)
+        i = i + 1
+    end
+    return round(mean(accs), digits=4)
+end
+
+```
+
+```{julia}
+
+lr = 1
+
+weights = init_params((28 * 28, 1))
+bias = init_params(1)
+
+params = Dict("weights" => weights, "bias" => bias)
+
+train_epoch(linear1, lr, params)
+
+validate_epoch(linear1)
+
+```
+
+
+```{julia}
+
+for i in range(1, 20)
+    train_epoch(linear1, lr, params)
+    println((i, validate_epoch(linear1), train_accuracy(linear1)))
+end
+
+```
+
+
+## Creating an Optimizer
+
+A Flux based implementation
+
+```{julia}
+
+model = Chain(
+    Dense(28 * 28 => 1),
+    Flux.sigmoid  ## or σ
+)
+
+optim = Flux.setup(Flux.Adam(1.0), model)
+
+losses = []
+
+for epoch in 1:20
+    for dd in dl
+        xb, yb = reformat_dl(dd)
+        loss, grads = Flux.withgradient(model) do m
+            # Evaluate model and loss inside gradient context:
+            y_hat = m(xb')
+            Flux.binarycrossentropy(y_hat, yb')  # mnist_loss(y_hat', yb)
+        end
+        Flux.update!(optim, model, grads[1])
+        push!(losses, loss)  # logging, outside gradient context
+    end
+end
+
+optim # parameters, momenta and output have all changed
+
+xb, yb = reformat_dl(first(valid_dl))
+
+out2 = model(xb')  # first row is prob. of true, second row p(false)
+
+mean((out2[1, :] .> 0.5) .== yb)
+
+```
+
+Show examples of predicting seven and three.
+
+```{julia}
+
+xb, yb = reformat_dl(last(valid_dl))
+
+seven_examples = rand(findall(y -> y == 0, yb[:]), 9)
+
+convert(Array{Gray}, mosaic(map(i -> reshape(xb[i, :], 28, 28), seven_examples), ncol=3))
+
+[b > 0.5 ? "three" : "seven" for b in model(xb[seven_examples, :]')]
+```
+
+```{julia}
+three_examples = rand(findall(y -> y == 1, yb[:]), 9)
+convert(Array{Gray}, mosaic(map(i -> reshape(xb[i, :], 28, 28), three_examples), ncol=3))
+[b > 0.5 ? "three" : "seven" for b in model(xb[three_examples, :]')]
+
+```
+
+
+## Adding a Nonlinearity
+
+```{julia}
+
+function simple_net1(xb)
+    res = xb * w1 .+ b1'
+    res[res.<0] .= 0
+    res = res * w2 .+ b2
+    return res
+end
+
+w1 = init_params((28 * 28, 30))
+b1 = init_params(30)
+w2 = init_params((30, 1))
+b2 = init_params(1)
+
+simple_net1(train_x[1:4, :])
+
+```
+
+
+
+```{julia}
+plot(range(-5, 5), Flux.relu)
+
+```
+
+```{julia}
+
+simple_net_flux = Chain(
+    Flux.Dense(28 * 28, 30),
+    Flux.relu,
+    Flux.Dense(30, 1)
+)
+
+Flux.params(simple_net_flux[1])[1] .= w1'
+Flux.params(simple_net_flux[1])[2] .= b1
+
+Flux.params(simple_net_flux[3])[1] .= w2'
+Flux.params(simple_net_flux[3])[2] .= b2
+
+simple_net_flux(train_x[1:4, :]')
+
+```
 
 ## Training a Digit Classifier
 
@@ -86,20 +850,20 @@ X, y = MLDatasets.MNIST(:train)[:]
 y_enc = Flux.onehotbatch(y, 0:9)
 Xtest, ytest = MLDatasets.MNIST(:test)[:]
 ytest_enc = onehotbatch(ytest, 0:9)
-mosaic(map(i -> convert2image(MNIST, X[:,:,i]), rand(1:60000,100)), ncol=10)
+mosaic(map(i -> convert2image(MNIST, X[:, :, i]), rand(1:60000, 100)), ncol=10)
 ```
 
 We can preprocess the data as follows:
 
 ```{julia}
 i_train, i_val = [], []
-for (k,v) in group_indices(y)
+for (k, v) in group_indices(y)
     _i_train, _i_val = splitobs(v, at=0.7)
     push!(i_train, _i_train...)
     push!(i_val, _i_val...)
 end
-Xtrain, ytrain = X[:,:,i_train], y_enc[:,i_train]
-Xval, yval = X[:,:,i_val], y_enc[:,i_val]
+Xtrain, ytrain = X[:, :, i_train], y_enc[:, i_train]
+Xval, yval = X[:, :, i_val], y_enc[:, i_val]
 ```
 
 Next, we define a data loader:
@@ -128,7 +892,7 @@ Finally, what's left to do is to define a loss function and an optimiser:
 #| output: false
 
 loss(y_hat, y) = Flux.Losses.crossentropy(y_hat, y)
-opt_state = Flux.setup(Adam(),model)
+opt_state = Flux.setup(Adam(), model)
 ```
 
 Before we start training, we define some helper functions:
@@ -140,15 +904,15 @@ Before we start training, we define some helper functions:
 # Callbacks:
 function accuracy(model, data::DataLoader)
     acc = 0
-    for (x,y) in data
-        acc += sum(onecold(model(x)) .== onecold(y)) / size(y,2)
+    for (x, y) in data
+        acc += sum(onecold(model(x)) .== onecold(y)) / size(y, 2)
     end
     return acc / length(data)
 end
 
 function avg_loss(model, data::DataLoader)
     _loss = 0
-    for (x,y) in data
+    for (x, y) in data
         _loss += loss(model(x), y)[1]
     end
     return _loss / length(data)
@@ -235,14 +999,14 @@ end
 #| output: false
 
 output = DataFrame(log)
-output = output[2:end,:]
+output = output[2:end, :]
 
 anim = @animate for epoch in 1:maximum(output.epoch)
-    p_loss = plot(output[1:epoch,:epoch], Matrix(output[1:epoch,[:loss_train,:loss_val]]), 
+    p_loss = plot(output[1:epoch, :epoch], Matrix(output[1:epoch, [:loss_train, :loss_val]]),
         label=["Train" "Validation"], title="Loss", legend=:topleft)
-    p_acc = plot(output[1:epoch,:epoch], Matrix(output[1:epoch,[:acc_train,:acc_val]]), 
+    p_acc = plot(output[1:epoch, :epoch], Matrix(output[1:epoch, [:acc_train, :acc_val]]),
         label=["Train" "Validation"], title="Accuracy", legend=:topleft)
-    plot(p_loss, p_acc, layout=(1,2), dpi=300, margin=5mm, size=(800,400))
+    plot(p_loss, p_acc, layout=(1, 2), dpi=300, margin=5mm, size=(800, 400))
 end
 gif(anim, joinpath(www_path, "c4_mnist.gif"), fps=5)
 ```
