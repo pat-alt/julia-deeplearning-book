@@ -93,9 +93,6 @@ size(three_tensors[1])
 size(three_tensors)
 ```
 
-## Computing Metrics Using Broadcasting
-
-The rule of broadcasting in Julia is different from Python? In Python, first align all dimensions to the right, then broadcast. In Julia, first align all dimensions to the left, then broadcast. So in python [1000, 28, 28] - [28, 28] is allowed, but in Julia, we need [28, 28, 1000] - [28, 28]. Use `permutedims` to change the order of dimensions.
 
 ```{julia}
 
@@ -106,7 +103,7 @@ size(stacked_sevens), size(stacked_threes)
 ```
 
 
-Alternatively can create seven_tensors and three_tensors directly from MLUDatasets:
+Alternatively one can create seven_tensors and three_tensors directly from MLUDatasets:
 
 ```{julia}
 
@@ -117,6 +114,11 @@ stacked_threes = dataset.features[:, :, dataset.targets.==3]
 
 size(stacked_sevens), size(stacked_threes)
 
+```
+
+```{julia}
+# length(size(stacked_threes))
+ndims(stacked_threes)
 ```
 
 ```{julia}
@@ -136,12 +138,16 @@ convert(Array{Gray}, hcat(stacked_sevens[:, :, 1], stacked_threes[:, :, 1]))
 mean3 = mean(stacked_threes, dims=3)
 mean3 = mean3[:, :, 1]
 
+convert(Array{Gray}, mean3)
+
 ```
 
 ```{julia}
 
 mean7 = mean(stacked_sevens, dims=3)
 mean7 = mean7[:, :, 1]
+
+convert(Array{Gray}, mean7)
 
 ```
 
@@ -158,13 +164,17 @@ Flux.Losses.mae(a_3, mean3), sqrt(Flux.Losses.mse(a_3, mean3))
 
 ```
 
+## Computing Metrics Using Broadcasting
+
+The rule of broadcasting in Julia is different from Python? In Python, first align all dimensions to the right, then broadcast. In Julia, first align all dimensions to the left, then broadcast. So in python [1000, 28, 28] - [28, 28] is allowed, but in Julia, we need [28, 28, 1000] - [28, 28]. Use `permutedims` to change the order of dimensions.
+
 ```{julia}
 
-test_threes = sort(readdir(joinpath(data_path, "test", "3")))
-valid_3_tens = stack([load(joinpath(data_path, "test", "3", img)) for img in test_threes])
+valid_threes = sort(readdir(joinpath(data_path, "test", "3")))
+valid_3_tens = stack([load(joinpath(data_path, "test", "3", img)) for img in valid_threes])
 
-test_sevens = sort(readdir(joinpath(data_path, "test", "7")))
-valid_7_tens = stack([load(joinpath(data_path, "test", "7", img)) for img in test_sevens])
+valid_sevens = sort(readdir(joinpath(data_path, "test", "7")))
+valid_7_tens = stack([load(joinpath(data_path, "test", "7", img)) for img in valid_sevens])
 
 # valid_3_tens = permutedims(valid_3_tens, [3, 1, 2])
 
@@ -281,13 +291,7 @@ gif(anim, joinpath(www_path, "c4_gd.gif"), fps=0.5)
 ## is time a good variable name?
 time = collect(range(start=0, stop=19))
 
-## The following doesn't work, 
-##  @. is generating "rand.(20)", which is a vector of one element of vectors of 20 random numbers 
-## speed = @. rand(20) * 3 .+ (0.75 * (time - 9.5)^2 + 1)
-
 speed = @. $rand(20) + 0.75 * (time - 9.5)^2 + 1
-speed = @. rand(20)[1] + 0.75 * (time - 9.5)^2 + 1
-speed = rand(20) + @. 0.75 * (time - 9.5)^2 + 1
 
 scatter(time, speed, legend=false, xlabel="time", ylabel="speed")
 
@@ -324,10 +328,12 @@ preds = f(time, params)
 
 show_preds(preds)
 
+```
+
+```{julia}
 loss = mse(preds, speed)
 
 ```
-
 ```{julia}
 
 dloss(params) = gradient(params -> mse(f(time, params), speed), params)
@@ -367,7 +373,7 @@ params = rand(3)
 plts = []
 
 for i in range(1, 4)
-    push!(plts, show_preds(apply_step!(params; lr=0.01, prn=false)))
+    push!(plts, show_preds(apply_step!(params; lr=0.0001, prn=false)))
 end
 
 plot(
@@ -384,7 +390,7 @@ preds = f(time, params)
 plts = []
 push!(plts, show_preds(preds))
 
-lr = 0.01  ## how to adjust learning rate? takes a lot of time to learn
+lr = 0.0001  ## how to adjust learning rate? takes a lot of time to learn
 for i in range(0, 60000)
     apply_step!(params, prn=false)
 end
@@ -423,8 +429,8 @@ size(dset), size(x), y
 valid_x = cat(valid_3_tens, valid_7_tens, dims=3) |> x -> reshape(x, 28 * 28, :) |> transpose;
 valid_y = vcat(repeat([1], size(valid_3_tens)[3]), repeat([0], size(valid_7_tens)[3]));
 valid_dset = zip(eachrow(valid_x), valid_y);
-x, y = dset[1]
-size(x), y
+
+size(valid_x), size(valid_y), size(valid_dset)
 
 ```
 
@@ -435,19 +441,24 @@ weights = init_params((28 * 28, 1))
 
 bias = init_params(1)
 
+size(weights), size(bias)
 ```
 
 ```{julia}
 
 train_x = convert(Array{Float32}, train_x)
 
-xx = train_x[1:1, :] * weights .+ bias
-
-## gradient?
-gradient(weights -> sum(train_x[1:1, :] * weights), weights)
+train_x[1:1, :] * weights .+ bias
 
 ```
 
+Pytorch tensor provides a tag to indicate if gradient is to be computed.
+This is not needed in Flux? To get gradient, just use gradient function in Flux
+
+```{julia}
+gradient(weights -> sum(train_x[1:1, :] * weights), weights)
+
+```
 ```{julia}
 
 linear1(xb) = xb * weights .+ bias
@@ -478,19 +489,16 @@ prds = [0.9, 0.4, 0.2]
 
 mnist_loss(predictions, targets) = mean(t === 1 ? 1 - p : p for (p, t) in zip(predictions, targets))
 
-[t === 1 ? 1 - p : p for (p, t) in zip(prds, trgts)]
-
-mnist_loss(prds, trgts)
-
-mnist_loss([0.9, 0.4, 0.8], trgts)
+mnist_loss(prds, trgts), mnist_loss([0.9, 0.4, 0.8], trgts)
 
 ```
 
 ```{julia}
 sigmoid(x) = 1 / (1 + exp(-x))
 
+print(sigmoid.(rand(10)))
+
 plot(range(-5, 5, length=100), sigmoid)
-sigmoid.(rand(10))
 
 ```
 ```{julia}
@@ -516,7 +524,7 @@ collect(dl)
 
 ```{julia}
 
-lowercase_alphabets = [Char(i) for i in 97:122]
+lowercase_alphabets = 'a':'z' ## [Char(i) for i in 97:122]
 
 ds = [ (i, v) for (i, v) in enumerate(lowercase_alphabets)]
 
@@ -556,6 +564,8 @@ size(xb), size(yb)
 
 ```{julia}
 
+valid_x = convert(Array{Float32}, valid_x)
+
 valid_dset = [(valid_x[i, :], valid_y[i]) for i in range(1, size(valid_x)[1])]
 
 valid_dl = DataLoader(valid_dset, batchsize=256, shuffle=true)
@@ -572,7 +582,6 @@ preds = linear1(batch)
 loss = mnist_loss(preds, train_y[1:4])
 
 ## redefine linear layer to include weights and bias as parameters
-## how to combine weights and bias into a single parameter dictionary?
 
 linear1(xb, weights, bias) = xb * weights .+ bias
 preds = linear1(batch, weights, bias)
@@ -585,6 +594,8 @@ end
 ```
 
 ```{julia}
+# using dictionary to store parameters
+
 params = Dict("weights" => weights, "bias" => bias)
 
 linear1(xb, params) = xb * params["weights"] .+ params["bias"]
@@ -610,7 +621,7 @@ end
 
 ```
 
-Using params dictionary?
+Using params dictionary.
 
 ```{julia}
 
@@ -643,7 +654,7 @@ function train_epoch(model, lr, params)
         grad = calc_grad(xb, yb, model, params)[1]
         for k in keys(params)
             params[k] .-= grad[k] * lr
-            ## p.grad.zero_()
+            ## no need to zero_grad? in Pytorch, p.grad.zero_()
         end
     end
 end
@@ -703,12 +714,12 @@ end
 
 lr = 1
 
-weights = init_params((28*28,1))
+weights = init_params((28 * 28, 1))
 bias = init_params(1)
 
 params = Dict("weights" => weights, "bias" => bias)
 
-train_epoch(linear1_p, lr, params)
+train_epoch(linear1, lr, params)
 
 validate_epoch(linear1)
 
@@ -719,9 +730,8 @@ validate_epoch(linear1)
 
 for i in range(1, 20)
     train_epoch(linear1, lr, params)
-    print((validate_epoch(linear1), train_accuracy(linear1)))
+    println((i, validate_epoch(linear1), train_accuracy(linear1)))
 end
-
 
 ```
 
@@ -732,10 +742,11 @@ A Flux based implementation
 
 ```{julia}
 
-linear_flux = Chain(
-    Dense(28*28 => 1),
+model = Chain(
+    Dense(28 * 28 => 1),
     Flux.sigmoid  ## or σ
 )
+
 optim = Flux.setup(Flux.Adam(1.0), model)
 
 losses = []
@@ -743,7 +754,7 @@ losses = []
 for epoch in 1:20
     for dd in dl
         xb, yb = reformat_dl(dd)
-        loss, grads = Flux.withgradient(linear_flux) do m
+        loss, grads = Flux.withgradient(model) do m
             # Evaluate model and loss inside gradient context:
             y_hat = m(xb')
             Flux.binarycrossentropy(y_hat, yb')  # mnist_loss(y_hat', yb)
@@ -754,9 +765,32 @@ for epoch in 1:20
 end
 
 optim # parameters, momenta and output have all changed
+
+xb, yb = reformat_dl(first(valid_dl))
+
 out2 = model(xb')  # first row is prob. of true, second row p(false)
 
-mean((out2[1,:] .> 0.5) .== yb)
+mean((out2[1, :] .> 0.5) .== yb)
+
+```
+
+Show examples of predicting seven and three.
+
+```{julia}
+
+xb, yb = reformat_dl(last(valid_dl))
+
+seven_examples = rand(findall(y -> y == 0, yb[:]), 9)
+
+convert(Array{Gray}, mosaic(map(i -> reshape(xb[i, :], 28, 28), seven_examples), ncol=3))
+
+[b > 0.5 ? "three" : "seven" for b in model(xb[seven_examples, :]')]
+```
+
+```{julia}
+three_examples = rand(findall(y -> y == 1, yb[:]), 9)
+convert(Array{Gray}, mosaic(map(i -> reshape(xb[i, :], 28, 28), three_examples), ncol=3))
+[b > 0.5 ? "three" : "seven" for b in model(xb[three_examples, :]')]
 
 ```
 
@@ -767,17 +801,17 @@ mean((out2[1,:] .> 0.5) .== yb)
 
 function simple_net1(xb)
     res = xb * w1 .+ b1'
-    res[res .< 0] .= 0 
+    res[res.<0] .= 0
     res = res * w2 .+ b2
     return res
 end
 
-w1 = init_params((28*28,30))
+w1 = init_params((28 * 28, 30))
 b1 = init_params(30)
-w2 = init_params((30,1))
+w2 = init_params((30, 1))
 b2 = init_params(1)
 
-simple_net1(train_x[1:4,:])
+simple_net1(train_x[1:4, :])
 
 ```
 
@@ -791,9 +825,9 @@ plot(range(-5, 5), Flux.relu)
 ```{julia}
 
 simple_net_flux = Chain(
-    Flux.Dense(28*28,30),
+    Flux.Dense(28 * 28, 30),
     Flux.relu,
-    Flux.Dense(30,1)
+    Flux.Dense(30, 1)
 )
 
 Flux.params(simple_net_flux[1])[1] .= w1'
@@ -802,7 +836,7 @@ Flux.params(simple_net_flux[1])[2] .= b1
 Flux.params(simple_net_flux[3])[1] .= w2'
 Flux.params(simple_net_flux[3])[2] .= b2
 
-simple_net_flux(train_x[1:4,:]')
+simple_net_flux(train_x[1:4, :]')
 
 ```
 
