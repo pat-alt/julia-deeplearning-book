@@ -101,8 +101,6 @@ The rule of broadcasting in Julia is different from Python? In Python, first ali
 
 stacked_sevens = stack(seven_tensors)
 stacked_threes = stack(three_tensors)
-#stacked_sevens = cat(seven_tensors..., dims=3) ## stackoverflow, too many ...
-#stacked_threes = cat(three_tensors[1:1000]..., dims=3) ## stackoverflow
 size(stacked_sevens), size(stacked_threes)
 
 ```
