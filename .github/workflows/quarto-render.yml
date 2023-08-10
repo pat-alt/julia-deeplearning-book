@@ -1,7 +1,8 @@
 on:
   push:
     branches: main
-  
+  pull_request:
+    branches: main
 name: Render
 
 jobs:
