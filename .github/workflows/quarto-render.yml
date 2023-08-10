@@ -44,6 +44,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-${{ env.cache-name }}-
     - name: "Setup Julia environment"
-      run: "setup_render.jl --quarto"
+      run: "julia setup_render.jl"
     - name: Render Quarto Project
       uses: quarto-dev/quarto-actions/render@v2
