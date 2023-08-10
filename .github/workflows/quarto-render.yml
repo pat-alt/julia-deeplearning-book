@@ -43,7 +43,5 @@ jobs:
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('CondaPkg.toml') }}
         restore-keys: |
           ${{ runner.os }}-${{ env.cache-name }}-
-    - name: "Setup Julia environment"
+    - name: "Render"
       run: "julia setup_render.jl"
-    - name: Render Quarto Project
-      uses: quarto-dev/quarto-actions/render@v2
