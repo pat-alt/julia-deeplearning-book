@@ -4,7 +4,6 @@ on:
   pull_request:
     branches: main
 name: Render
-
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
@@ -15,7 +14,7 @@ jobs:
       uses: quarto-dev/quarto-actions/setup@v2
       with:
         # To install LaTeX to build PDF book 
-        tinytex: true 
+        # tinytex: true 
         # uncomment below and fill to pin a version
         # version: SPECIFIC-QUARTO-VERSION-HERE
     - name: Setup Julia
