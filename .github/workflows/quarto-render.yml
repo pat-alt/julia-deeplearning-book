@@ -21,6 +21,8 @@ jobs:
       uses: julia-actions/setup-julia@latest
       with:
         version: 1.9
+    - name: Julia Cache
+      uses: julia-actions/cache@v1
     - name: Cache Quarto
       id: cache-quarto
       uses: actions/cache@v3
