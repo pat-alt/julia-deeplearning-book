@@ -11,3 +11,6 @@ CondaPkg.withenv() do
     Pkg.build("IJulia") # build IJulia to the right version.
     run(`quarto render`)
 end
+
+# Always accept data downloads:
+ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
