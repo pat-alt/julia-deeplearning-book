@@ -1,9 +1,9 @@
 on:
   push:
     branches: main
-  
+  pull_request:
+    
 name: Render
-
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
@@ -12,9 +12,9 @@ jobs:
       uses: actions/checkout@v3    
     - name: Set up Quarto
       uses: quarto-dev/quarto-actions/setup@v2
-      with:
+      # with:
         # To install LaTeX to build PDF book 
-        tinytex: true 
+        # tinytex: true 
         # uncomment below and fill to pin a version
         # version: SPECIFIC-QUARTO-VERSION-HERE
     - name: Setup Julia
@@ -33,5 +33,15 @@ jobs:
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('*.qmd') }}
         restore-keys: |
           ${{ runner.os }}-${{ env.cache-name }}-
-    - name: Render Quarto Project
-      uses: quarto-dev/quarto-actions/render@v2
+    - name: Cache CondaPkg
+      id: cache-condaPkg
+      uses: actions/cache@v3
+      env:
+        cache-name: cache-condapkg
+      with:
+        path: /.CondaPkg
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('CondaPkg.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ env.cache-name }}-
+    - name: "Render"
+      run: "julia setup_render.jl"
