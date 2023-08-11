@@ -501,6 +501,7 @@ print(sigmoid.(rand(10)))
 plot(range(-5, 5, length=100), sigmoid)
 
 ```
+
 ```{julia}
 
 function mnist_loss(predictions, targets)
@@ -778,7 +779,7 @@ Show examples of predicting seven and three.
 
 ```{julia}
 
-xb, yb = reformat_dl(last(valid_dl))
+xb, yb = reformat_dl(collect(valid_dl)[end])
 
 seven_examples = rand(findall(y -> y == 0, yb[:]), 9)
 
