@@ -14,4 +14,5 @@ CondaPkg.withenv() do
     Pkg.instantiate()
     @info "Render book"
     Pkg.build("IJulia") # build IJulia to the right version.
+    run(`quarto publish`)
 end
