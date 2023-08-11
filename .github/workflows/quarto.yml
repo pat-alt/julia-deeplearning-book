@@ -45,3 +45,5 @@ jobs:
           ${{ runner.os }}-${{ env.cache-name }}-
     - name: "Render"
       run: "julia setup_render.jl"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
