@@ -1,6 +1,8 @@
 using Pkg
 Pkg.activate(@__DIR__)
 Pkg.status()
+Pkg.resolve()
+Pkg.instantiate()
 using CondaPkg
 CondaPkg.withenv() do
     Pkg.resolve()
