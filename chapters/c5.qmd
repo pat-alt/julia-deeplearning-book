@@ -1,6 +1,9 @@
 # Chapter 5: Image Classification
 
 ```{julia}
+#| echo: false
+#| output: false
+
 using Pkg; Pkg.activate(".")
 
 using FastAI
