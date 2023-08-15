@@ -1,0 +1,5 @@
+# Chapter 5: Image Classification
+
+```{julia}
+using Pkg; Pkg.activate(".")
+```
