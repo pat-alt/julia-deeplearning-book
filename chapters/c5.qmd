@@ -157,14 +157,20 @@ show_batch(train_dl)
 ```
 
 ```{julia}
-clf_task = ImageClassificationSingle(blocks)
-backbone = Metalhead.ResNet(34, pretrain=true).layers[1:end-1]
+backbone = Metalhead.ResNet(34, pretrain=true)
+model = Chain(
+    backbone,
+    Chain(
+        Dense(1000, length(unique(labels))),
+    )
+)
 lossfn = Flux.Losses.logitcrossentropy
 optimizer = Flux.Adam()
-learner = tasklearner(
-    clf_task, train_dl, val_dl; 
-    optimizer=optimizer, lossfn=lossfn, backbone=backbone,
-    callbacks=[ToGPU(), Metrics(accuracy)]
+callbacks = [ToGPU(), Metrics(accuracy)]
+learner = Learner(
+    model, (train_dl, val_dl),
+    optimizer, lossfn,
+    callbacks...
 )
 ```
 
