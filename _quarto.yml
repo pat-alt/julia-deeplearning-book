@@ -26,6 +26,7 @@ book:
     - index.qmd
     - intro.qmd
     - chapters/c4.qmd
+    - chapters/c5.qmd
     - summary.qmd
     - contributors.qmd
     - references.qmd

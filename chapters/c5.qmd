@@ -6,6 +6,7 @@ using Pkg; Pkg.activate(".")
 using FastAI
 using FastAI.Datasets
 using FastVision
+using FastVision.Models
 using Flux
 using Images
 using Metalhead
@@ -21,12 +22,10 @@ He we are closely following the `FastAI.jl` tutorials on [data containers](https
 
 :::
 
-
-
 We can load the Pet dataset as follows:
 
 ```{julia}
-dir = load(datasets()["oxford-iiit-pet"])
+dir = FastAI.load(datasets()["oxford-iiit-pet"])
 ```
 
 ```{julia}
@@ -118,6 +117,7 @@ val_dl = DataLoader(val_data, batchsize=32)
 Next, we define the data augmentation task separately as a `BlockTask`:
 
 ```{julia}
+_resize = 128
 blocks = (
     Image{2}(),
     Label{String}(unique(labels)),
@@ -125,7 +125,7 @@ blocks = (
 task = BlockTask(
     blocks,
     (   
-        ProjectiveTransforms((460, 460), buffered=false, sharestate=false),
+        ProjectiveTransforms((_resize, _resize), buffered=false, sharestate=false),
         ImagePreprocessing(buffered=false),
         OneHot(),
     )
@@ -136,7 +136,8 @@ describetask(task)
 We can apply the augmentation to the data as follows:
 
 ```{julia}
-train_dl, val_dl = taskdataloaders(train_data, val_data, task, 32)
+batchsize = 128
+train_dl, val_dl = taskdataloaders(train_data, val_data, task, batchsize)
 ```
 
 Let's quickly verify that the images look as expected. There does not seem to be a `show_batch` function, but we can implement one from scratch:
@@ -156,14 +157,19 @@ end
 show_batch(train_dl)
 ```
 
+Finally, we can build our model as follows:
+
 ```{julia}
-backbone = Metalhead.ResNet(34, pretrain=true)
+# Get backbone and head:
+backbone = Metalhead.ResNet(18, pretrain=true).layers[1][1:end-1]
+h, w, ch, b = Flux.outputsize(backbone, (_resize, _resize, 3, 1))
+head = FastVision.Models.visionhead(ch, length(unique(labels)))
+# Set up model:
 model = Chain(
     backbone,
-    Chain(
-        Dense(1000, length(unique(labels))),
-    )
+    head
 )
+# Set up loss function, optimizer, callbacks, and learner:
 lossfn = Flux.Losses.logitcrossentropy
 optimizer = Flux.Adam()
 callbacks = [ToGPU(), Metrics(accuracy)]
@@ -175,5 +181,7 @@ learner = Learner(
 ```
 
 ```{julia}
+#| eval: false
+
 finetune!(learner, 1)
 ```
