@@ -2,4 +2,172 @@
 
 ```{julia}
 using Pkg; Pkg.activate(".")
+
+using FastAI
+using FastAI.Datasets
+using FastVision
+using Flux
+using Images
+using Metalhead
+using MLUtils
+using Plots
+```
+
+::: {.callout-note}
+
+## `FastAI.jl`
+
+He we are closely following the `FastAI.jl` tutorials on [data containers](https://fluxml.ai/FastAI.jl/dev/FastAI@dev/doc/docs/data_containers.md.html), [siamese image similarity](https://fluxml.ai/FastAI.jl/dev/FastAI@dev/doc/docs/notebooks/siamese.ipynb.html)
+
+:::
+
+
+
+We can load the Pet dataset as follows:
+
+```{julia}
+dir = load(datasets()["oxford-iiit-pet"])
+```
+
+```{julia}
+readdir(dir)
+```
+
+```{julia}
+img_dir = joinpath(dir, "images")
+```
+
+::: {.callout-tip}
+
+## `FastAI.jl` convention
+
+Using `FastAI.jl` convention, we can load a single image as follows:
+
+```{julia}
+files = loadfolderdata(img_dir; filterfn=FastVision.isimagefile)
+p = getobs(files, 1)
+```
+
+We can see that the file names contain the pet breed. 
+
+:::
+
+Using *regular expressions*, we can extract the pet breed from the file name:
+
+```{julia}
+re = r"(.+)_\d+.jpg$"
+fname = pathname(p)
+label_func(path) = lowercase(match(re, pathname(path))[1])
+label_func(fname)
+```
+
+Now lets check how many unique pet breeds we have:
+
+```{julia}
+labels = map(label_func, files)
+length(unique(labels))
+```
+
+We can create a function that loads an image and its class:
+
+```{julia}
+function loadimageclass(p)
+    return (
+        @. loadfile(p),                 # broadcasting to make compatible with minibatching
+        @. pathname(p) |> label_func
+    )
+end
+
+image, class = loadimageclass(p)
+
+@show class
+image
+```
+
+Finally, we can use `mapobs` to lazily load all the images and their classes:
+
+```{julia}
+data = mapobs(loadimageclass, files);
+```
+
+```{julia}
+@show numobs(data)
+image, label = getobs(data, 1)
+```
+
+## Using the Data Block API
+
+::: {.callout-warning}
+
+## `FastAI.jl` convention
+
+Contrary to fast.ai, `FastAI.jl` separates the data loading and container generation from the data augmentation. From the [documentation](https://fluxml.ai/FastAI.jl/dev/FastAI@dev/doc/docs/notebooks/siamese.ipynb.html):
+
+> In FastAI.jl, the preprocessing or "encoding" is implemented through a learning task. Learning tasks contain any configuration and, beside data processing, have extensible functions for visualizations and model building. One advantage of this separation between loading and encoding is that the data container can easily be swapped out as long as it has observations suitable for the learning task (in this case a tuple of two images and a Boolean). It also makes it easy to export models and all the necessary configuration.
+
+:::
+
+First, we follow the standard procedure to split the data into training and validation sets:
+
+```{julia}
+train_data, val_data = splitobs(data; at=0.8)
+train_dl = DataLoader(shuffleobs(train_data); batchsize=16)
+val_dl = DataLoader(val_data, batchsize=32)
+```
+
+Next, we define the data augmentation task separately as a `BlockTask`:
+
+```{julia}
+blocks = (
+    Image{2}(),
+    Label{String}(unique(labels)),
+)
+task = BlockTask(
+    blocks,
+    (   
+        ProjectiveTransforms((460, 460), buffered=false, sharestate=false),
+        ImagePreprocessing(buffered=false),
+        OneHot(),
+    )
+)
+describetask(task)
+```
+
+We can apply the augmentation to the data as follows:
+
+```{julia}
+train_dl, val_dl = taskdataloaders(train_data, val_data, task, 32)
+```
+
+Let's quickly verify that the images look as expected. There does not seem to be a `show_batch` function, but we can implement one from scratch:
+
+```{julia}
+_show_img(x) = colorview(RGB, permutedims(x, (3,1,2)))
+_plot_img(x,label) = Plots.plot(_show_img(x), title=label, ticks=false, border=:none)
+function show_batch(dl::DataLoader; nrow=1, ncol=3)
+    batch = first(dl)
+    X, y = batch[1], batch[2]
+    n_samples = size(y,2)
+    n = nrow * ncol
+    idx = rand(1:n_samples, n)
+    imgs = [_plot_img(X[:,:,:,i],Flux.onecold(y[:,i],unique(labels))) for i in idx]
+    Plots.plot(imgs...; layout=(nrow,ncol), size=(ncol*200,nrow*200))
+end
+show_batch(train_dl)
+```
+
+```{julia}
+clf_task = ImageClassificationSingle(blocks)
+backbone = Metalhead.ResNet(34, pretrain=true).layers[1:end-1]
+lossfn = Flux.Losses.logitcrossentropy
+optimizer = Flux.Adam()
+learner = tasklearner(
+    clf_task, train_dl, val_dl; 
+    optimizer=optimizer, lossfn=lossfn, backbone=backbone,
+    callbacks=[ToGPU(), Metrics(accuracy)]
+)
+```
+
+```{julia}
+finetune!(learner, 1)
 ```
