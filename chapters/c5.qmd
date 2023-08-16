@@ -11,10 +11,15 @@ using FastAI.Datasets
 using FastVision
 using FastVision.Models
 using Flux
+using Flux: onecold
 using Images
 using Metalhead
 using MLUtils
 using Plots
+using StatsBase
+
+# Other:
+import FastMakie, CairoMakie
 ```
 
 ::: {.callout-note}
@@ -112,9 +117,7 @@ Contrary to fast.ai, `FastAI.jl` separates the data loading and container genera
 First, we follow the standard procedure to split the data into training and validation sets:
 
 ```{julia}
-train_data, val_data = splitobs(data; at=0.8)
-train_dl = DataLoader(shuffleobs(train_data); batchsize=16)
-val_dl = DataLoader(val_data, batchsize=32)
+train_data, val_data = splitobs(data; at=0.5, shuffle=true)
 ```
 
 Next, we define the data augmentation task separately as a `BlockTask`:
@@ -139,43 +142,57 @@ describetask(task)
 We can apply the augmentation to the data as follows:
 
 ```{julia}
-batchsize = 128
+batchsize = 3
 train_dl, val_dl = taskdataloaders(train_data, val_data, task, batchsize)
 ```
 
-Let's quickly verify that the images look as expected. There does not seem to be a `show_batch` function, but we can implement one from scratch:
+Let's quickly verify that the images look as expected:
 
 ```{julia}
-_show_img(x) = colorview(RGB, permutedims(x, (3,1,2)))
-_plot_img(x,label) = Plots.plot(_show_img(x), title=label, ticks=false, border=:none)
-function show_batch(dl::DataLoader; nrow=1, ncol=3)
-    batch = first(dl)
-    X, y = batch[1], batch[2]
-    n_samples = size(y,2)
-    n = nrow * ncol
-    idx = rand(1:n_samples, n)
-    imgs = [_plot_img(X[:,:,:,i],Flux.onecold(y[:,i],unique(labels))) for i in idx]
-    Plots.plot(imgs...; layout=(nrow,ncol), size=(ncol*200,nrow*200))
-end
-show_batch(train_dl)
+showbatch(task, first(train_dl))
 ```
 
-Finally, we can build our model as follows:
+Finally, we can build our model as follows. First, we define the backbone:
 
 ```{julia}
-# Get backbone and head:
-backbone = Metalhead.ResNet(18, pretrain=true).layers[1][1:end-1]
-h, w, ch, b = Flux.outputsize(backbone, (_resize, _resize, 3, 1))
-head = FastVision.Models.visionhead(ch, length(unique(labels)))
-# Set up model:
-model = Chain(
-    backbone,
-    head
-)
+# Get backbone:
+_backbone = Metalhead.ResNet(18, pretrain=true).layers[1][1:end-1]
+```
+
+Here we have removed the final layer of the ResNet model, because we will instead use a custom head. We could use the `taskmodel` function to build the model with an appropriate head automatically:
+
+```{julia}
+model = taskmodel(task, _backbone)
+model.layers[end]
+```
+
+Equivalently, we could have obtained an appropriate head as follows,
+
+```{julia}
+h, w, ch, b = Flux.outputsize(_backbone, (_resize, _resize, 3, 1))
+_head = Models.visionhead(ch, length(unique(labels)))
+```
+
+and then construct our model by chaining the backbone and head:
+
+```{julia}
+Chain(_backbone, _head)
+```
+
+With the model defined, we can now create a `Learner` object from scratch:
+
+```{julia}
+
+# Task data loader for new batch size:
+batchsize = 128
+train_dl, val_dl = taskdataloaders(train_data, val_data, task, batchsize)
+
 # Set up loss function, optimizer, callbacks, and learner:
 lossfn = Flux.Losses.logitcrossentropy
 optimizer = Flux.Adam()
-callbacks = [ToGPU(), Metrics(accuracy)]
+error_rate(ŷ, y) = mean(onecold(ŷ) .!= onecold(y)) 
+callbacks = [ToGPU(), Metrics(error_rate)]
+
 learner = Learner(
     model, (train_dl, val_dl),
     optimizer, lossfn,
@@ -183,8 +200,40 @@ learner = Learner(
 )
 ```
 
+
+::: {.callout-tip}
+
+## The `FastAI.jl` way
+
+Most of the manual jobs above can be done automatically using the `tasklearner` function:
+
+```{julia}
+learner = tasklearner(
+    task, train_data, val_data; 
+    backbone=_backbone, callbacks=callbacks,
+    lossfn=lossfn, optimizer=optimizer, batchsize=batchsize,
+)
+```
+
+Note that in this case, we pass on the raw, non-encoded data to the `tasklearner` function. This is because the `tasklearner` function will automatically encode the data using the `task` object.
+
+:::
+
+Below we fine-tune the model for 5 epochs and then save it to disk:
+
 ```{julia}
 #| eval: false
 
-finetune!(learner, 1)
+finetune!(learner, 4)
+savetaskmodel("artifacts/c5_resnet.jld2", task, learner, force=true)
+```
+
+```{julia}
+task, model = loadtaskmodel("artifacts/c5_resnet.jld2")
+
+samples = [getobs(data, i) for i in rand(1:numobs(val_data), 9)]
+images = [sample[1] for sample in samples]
+_labels = [sample[2] for sample in samples]
+
+preds = predictbatch(task, model, images)
 ```
