@@ -184,7 +184,7 @@ With the model defined, we can now create a `Learner` object from scratch:
 ```{julia}
 
 # Task data loader for new batch size:
-batchsize = 128
+batchsize = 64
 train_dl, val_dl = taskdataloaders(train_data, val_data, task, batchsize)
 
 # Set up loss function, optimizer, callbacks, and learner:
@@ -219,21 +219,46 @@ Note that in this case, we pass on the raw, non-encoded data to the `tasklearner
 
 :::
 
+We will begin by using the learning rate finder to find a good learning rate:
+
+```{julia}
+#| eval: false
+
+res = lrfind(learner)
+```
+
+![Learning rate finder output.](../www/c4_lr.png){#fig-lr-finder}
+
+
 Below we fine-tune the model for 5 epochs and then save it to disk:
 
 ```{julia}
 #| eval: false
 
-finetune!(learner, 4)
-savetaskmodel("artifacts/c5_resnet.jld2", task, learner, force=true)
+fitonecycle!(learner, 10, 3e-4)
+savetaskmodel("artifacts/c5_resnet.jld2", task, learner.model, force=true)
 ```
+
+Using our model, we can now make predictions on the validation set as follows:
 
 ```{julia}
 task, model = loadtaskmodel("artifacts/c5_resnet.jld2")
 
-samples = [getobs(data, i) for i in rand(1:numobs(val_data), 9)]
+samples = [getobs(data, i) for i in rand(1:numobs(val_data), 3)]
 images = [sample[1] for sample in samples]
 _labels = [sample[2] for sample in samples]
 
-preds = predictbatch(task, model, images)
+preds = predictbatch(task, model, images; device = gpu, context=Validation())
+```
+
+The accuracy is given by:
+
+```{julia}
+acc = sum(_labels .== preds) / length(preds)
+```
+
+We can visualize the predictions as follows:
+
+```{julia}
+showsamples(task, collect(zip(images, preds)))
 ```
