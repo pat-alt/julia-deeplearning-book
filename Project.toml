@@ -1,6 +1,7 @@
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 CondaPkg = "992eb4ea-22a4-4c89-a5bb-47a3300528ab"
+DataAugmentation = "88a5189c-e7ff-4f85-ac6b-e6158070f02e"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 FastAI = "5d0beca9-ade8-49ae-ad0b-a3cf890e669f"

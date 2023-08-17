@@ -6,6 +6,7 @@
 
 using Pkg; Pkg.activate(".")
 
+using DataAugmentation: ToEltype, compose
 using FastAI
 using FastAI.Datasets
 using FastVision
@@ -117,12 +118,13 @@ Contrary to fast.ai, `FastAI.jl` separates the data loading and container genera
 First, we follow the standard procedure to split the data into training and validation sets:
 
 ```{julia}
-train_data, val_data = splitobs(data; at=0.5, shuffle=true)
+train_data, val_data = splitobs(data; at=0.75, shuffle=true)
 ```
 
 Next, we define the data augmentation task separately as a `BlockTask`:
 
 ```{julia}
+T = Float16
 _resize = 128
 blocks = (
     Image{2}(),
@@ -131,13 +133,23 @@ blocks = (
 task = BlockTask(
     blocks,
     (   
-        ProjectiveTransforms((_resize, _resize), buffered=false, sharestate=false),
-        ImagePreprocessing(buffered=false),
+        ProjectiveTransforms(
+            (_resize, _resize), 
+            sharestate=false,
+        ),
+        ImagePreprocessing(T=Float16),
         OneHot(),
     )
 )
 describetask(task)
 ```
+
+::: {.callout-note}
+
+## Floating Point Precision
+
+Note that we have decreased the floating point precision here. This increases training speed at the cost of precision as discussed later in the book chapter. 
+:::
 
 We can apply the augmentation to the data as follows:
 
@@ -149,7 +161,7 @@ train_dl, val_dl = taskdataloaders(train_data, val_data, task, batchsize)
 Let's quickly verify that the images look as expected:
 
 ```{julia}
-showbatch(task, first(train_dl))
+showbatch(ShowText(), task, first(train_dl))
 ```
 
 Finally, we can build our model as follows. First, we define the backbone:
@@ -227,7 +239,7 @@ We will begin by using the learning rate finder to find a good learning rate:
 res = lrfind(learner)
 ```
 
-![Learning rate finder output.](../www/c4_lr.png){#fig-lr-finder}
+![Learning rate finder output.](../www/c5_lr.png){#fig-lr-finder}
 
 
 Below we fine-tune the model for 5 epochs and then save it to disk:
@@ -235,7 +247,23 @@ Below we fine-tune the model for 5 epochs and then save it to disk:
 ```{julia}
 #| eval: false
 
-fitonecycle!(learner, 10, 3e-4)
+finetune!(learner, 1, 3e-3)
+```
+
+::: {.callout-note}
+
+## Freeze epochs
+
+Note that by default, this will train the model for one epoch with pre-trained weights (our `_backbone`) completely frozen. In other weights, only the parameters of our `_head` will be updated during this epoch, before the second phase of training begins.
+
+:::
+
+Now we will fit the whole training cycle:
+
+```{julia}
+#| eval: false
+
+fitonecycle!(learner, 5, 3e-3)
 savetaskmodel("artifacts/c5_resnet.jld2", task, learner.model, force=true)
 ```
 
