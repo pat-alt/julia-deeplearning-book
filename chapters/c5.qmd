@@ -21,6 +21,7 @@ using StatsBase
 
 # Other:
 import FastMakie, CairoMakie
+CairoMakie.activate!(type="png")
 ```
 
 ::: {.callout-note}
@@ -118,13 +119,12 @@ Contrary to fast.ai, `FastAI.jl` separates the data loading and container genera
 First, we follow the standard procedure to split the data into training and validation sets:
 
 ```{julia}
-train_data, val_data = splitobs(data; at=0.75, shuffle=true)
+train_data, val_data = splitobs(data; at=0.8, shuffle=true)
 ```
 
 Next, we define the data augmentation task separately as a `BlockTask`:
 
 ```{julia}
-T = Float16
 _resize = 128
 blocks = (
     Image{2}(),
@@ -136,20 +136,14 @@ task = BlockTask(
         ProjectiveTransforms(
             (_resize, _resize), 
             sharestate=false,
+            buffered=false,
         ),
-        ImagePreprocessing(T=Float16),
+        ImagePreprocessing(buffered=false),
         OneHot(),
     )
 )
 describetask(task)
 ```
-
-::: {.callout-note}
-
-## Floating Point Precision
-
-Note that we have decreased the floating point precision here. This increases training speed at the cost of precision as discussed later in the book chapter. 
-:::
 
 We can apply the augmentation to the data as follows:
 
@@ -161,7 +155,7 @@ train_dl, val_dl = taskdataloaders(train_data, val_data, task, batchsize)
 Let's quickly verify that the images look as expected:
 
 ```{julia}
-showbatch(ShowText(), task, first(train_dl))
+showbatch(task, first(train_dl))
 ```
 
 Finally, we can build our model as follows. First, we define the backbone:
@@ -247,7 +241,7 @@ Below we fine-tune the model for 5 epochs and then save it to disk:
 ```{julia}
 #| eval: false
 
-finetune!(learner, 1, 3e-3)
+finetune!(learner, 5, 2e-3)
 ```
 
 ::: {.callout-note}
@@ -263,7 +257,7 @@ Now we will fit the whole training cycle:
 ```{julia}
 #| eval: false
 
-fitonecycle!(learner, 5, 3e-3)
+fitonecycle!(learner, 5, 2e-3)
 savetaskmodel("artifacts/c5_resnet.jld2", task, learner.model, force=true)
 ```
 

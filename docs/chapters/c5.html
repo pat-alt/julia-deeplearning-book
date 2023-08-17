@@ -239,13 +239,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We can load the Pet dataset as follows:</p>
-<div id="0da57e5d" class="cell" data-execution_count="2">
+<div id="ffa16d4c" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>dir <span class="op">=</span> FastAI.<span class="fu">load</span>(<span class="fu">datasets</span>()[<span class="st">"oxford-iiit-pet"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="3">
 <pre><code>"/Users/FA31DU/.julia/datadeps/fastai-oxford-iiit-pet"</code></pre>
 </div>
 </div>
-<div id="df5c0d04" class="cell" data-execution_count="3">
+<div id="50140236" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">readdir</span>(dir)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="4">
 <pre><code>2-element Vector{String}:
@@ -253,7 +253,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  "images"</code></pre>
 </div>
 </div>
-<div id="2c04b8f9" class="cell" data-execution_count="4">
+<div id="8d3a418c" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>img_dir <span class="op">=</span> <span class="fu">joinpath</span>(dir, <span class="st">"images"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="5">
 <pre><code>"/Users/FA31DU/.julia/datadeps/fastai-oxford-iiit-pet/images"</code></pre>
@@ -270,7 +270,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div class="callout-body-container callout-body">
 <p>Using <code>FastAI.jl</code> convention, we can load a single image as follows:</p>
-<div id="f94358a5" class="cell" data-execution_count="5">
+<div id="8d4fc965" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>files <span class="op">=</span> <span class="fu">loadfolderdata</span>(img_dir; filterfn<span class="op">=</span>FastVision.isimagefile)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> <span class="fu">getobs</span>(files, <span class="fl">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
@@ -281,7 +281,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Using <em>regular expressions</em>, we can extract the pet breed from the file name:</p>
-<div id="e698c37d" class="cell" data-execution_count="6">
+<div id="411803ee" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>re <span class="op">=</span> <span class="st">r"</span><span class="ch">(</span><span class="sc">.+</span><span class="ch">)</span><span class="st">_</span><span class="sc">\d+.</span><span class="st">jpg</span><span class="sc">$</span><span class="st">"</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>fname<span class="st"> = pathname</span><span class="ch">(</span><span class="st">p</span><span class="ch">)</span></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">label_func</span>(path) <span class="op">=</span> <span class="fu">lowercase</span>(<span class="fu">match</span>(re, <span class="fu">pathname</span>(path))[<span class="fl">1</span>])</span>
@@ -291,7 +291,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Now lets check how many unique pet breeds we have:</p>
-<div id="3a797cca" class="cell" data-execution_count="7">
+<div id="76aebf84" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>labels <span class="op">=</span> <span class="fu">map</span>(label_func, files)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">unique</span>(labels))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="8">
@@ -299,7 +299,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We can create a function that loads an image and its class:</p>
-<div id="31ddc0cc" class="cell" data-execution_count="8">
+<div id="9edad90c" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">loadimageclass</span>(p)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        @. <span class="fu">loadfile</span>(p),                 <span class="co"># broadcasting to make compatible with minibatching</span></span>
@@ -319,10 +319,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Finally, we can use <code>mapobs</code> to lazily load all the images and their classes:</p>
-<div id="ee71de71" class="cell" data-execution_count="9">
+<div id="1a7d34be" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> <span class="fu">mapobs</span>(loadimageclass, files);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="3147cec1" class="cell" data-execution_count="10">
+<div id="510daffe" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="pp">@show</span> <span class="fu">numobs</span>(data)</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>image, label <span class="op">=</span> <span class="fu">getobs</span>(data, <span class="fl">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -351,16 +351,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>First, we follow the standard procedure to split the data into training and validation sets:</p>
-<div id="2bc0d20f" class="cell" data-execution_count="11">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>train_data, val_data <span class="op">=</span> <span class="fu">splitobs</span>(data; at<span class="op">=</span><span class="fl">0.5</span>, shuffle<span class="op">=</span><span class="cn">true</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="21274b2b" class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>train_data, val_data <span class="op">=</span> <span class="fu">splitobs</span>(data; at<span class="op">=</span><span class="fl">0.8</span>, shuffle<span class="op">=</span><span class="cn">true</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="12">
 <pre><code>(ObsView(::MLUtils.MappedData{:auto, typeof(loadimageclass), ObsView{MLDatasets.FileDataset{typeof(identity), String}, Vector{Int64}}}, ::Vector{Int64})
- 3695 observations, ObsView(::MLUtils.MappedData{:auto, typeof(loadimageclass), ObsView{MLDatasets.FileDataset{typeof(identity), String}, Vector{Int64}}}, ::Vector{Int64})
- 3695 observations)</code></pre>
+ 5912 observations, ObsView(::MLUtils.MappedData{:auto, typeof(loadimageclass), ObsView{MLDatasets.FileDataset{typeof(identity), String}, Vector{Int64}}}, ::Vector{Int64})
+ 1478 observations)</code></pre>
 </div>
 </div>
 <p>Next, we define the data augmentation task separately as a <code>BlockTask</code>:</p>
-<div id="f4d9becf" class="cell" data-execution_count="12">
+<div id="fda85d67" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>_resize <span class="op">=</span> <span class="fl">128</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>blocks <span class="op">=</span> (</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Image</span><span class="dt">{2}</span>(),</span>
@@ -369,12 +369,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>task <span class="op">=</span> <span class="fu">BlockTask</span>(</span>
 <span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    blocks,</span>
 <span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    (   </span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>        <span class="fu">ProjectiveTransforms</span>((_resize, _resize), buffered<span class="op">=</span><span class="cn">false</span>, sharestate<span class="op">=</span><span class="cn">false</span>),</span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>        <span class="fu">ImagePreprocessing</span>(buffered<span class="op">=</span><span class="cn">false</span>),</span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>        <span class="fu">OneHot</span>(),</span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="fu">describetask</span>(task)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>        <span class="fu">ProjectiveTransforms</span>(</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>            (_resize, _resize), </span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>            sharestate<span class="op">=</span><span class="cn">false</span>,</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>            buffered<span class="op">=</span><span class="cn">false</span>,</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>        <span class="fu">ImagePreprocessing</span>(buffered<span class="op">=</span><span class="cn">false</span>),</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>        <span class="fu">OneHot</span>(),</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a><span class="fu">describetask</span>(task)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="13">
 <p><strong><code>SupervisedTask</code> summary</strong></p>
 <p>Learning task for the supervised task with input <code>Image{2}</code> and target <code>Label{String}</code>. Compatible with <code>model</code>s that take in <code>Bounded{2, FastVision.ImageTensor{2}}</code> and output <code>OneHotLabel{String}</code>.</p>
@@ -424,7 +428,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We can apply the augmentation to the data as follows:</p>
-<div id="558bac1b" class="cell" data-execution_count="13">
+<div id="be4f72fc" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>batchsize <span class="op">=</span> <span class="fl">3</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>train_dl, val_dl <span class="op">=</span> <span class="fu">taskdataloaders</span>(train_data, val_data, task, batchsize)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="14">
@@ -432,16 +436,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Let’s quickly verify that the images look as expected:</p>
-<div id="fd9252d3" class="cell" data-execution_count="14">
+<div id="09ee8235" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">showbatch</span>(task, <span class="fu">first</span>(train_dl))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="15">
-<pre><code>Figure()</code></pre>
+<p><img src="c5_files/figure-html/cell-15-output-1.png" class="img-fluid"></p>
 </div>
 </div>
 <p>Finally, we can build our model as follows. First, we define the backbone:</p>
-<div id="dbd5969b" class="cell" data-execution_count="15">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get backbone:</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>_backbone <span class="op">=</span> Metalhead.<span class="fu">ResNet</span>(<span class="fl">18</span>, pretrain<span class="op">=</span><span class="cn">true</span>).layers[<span class="fl">1</span>][<span class="fl">1</span><span class="op">:</span><span class="kw">end</span><span class="op">-</span><span class="fl">1</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="7d0c0d08" class="cell" data-execution_count="15">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get backbone:</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>_backbone <span class="op">=</span> Metalhead.<span class="fu">ResNet</span>(<span class="fl">18</span>, pretrain<span class="op">=</span><span class="cn">true</span>).layers[<span class="fl">1</span>][<span class="fl">1</span><span class="op">:</span><span class="kw">end</span><span class="op">-</span><span class="fl">1</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="16">
 <div class="ansi-escaped-output">
 <pre>Chain(
@@ -534,9 +538,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Here we have removed the final layer of the ResNet model, because we will instead use a custom head. We could use the <code>taskmodel</code> function to build the model with an appropriate head automatically:</p>
-<div id="b70abe22" class="cell" data-execution_count="16">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> <span class="fu">taskmodel</span>(task, _backbone)</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>model.layers[<span class="kw">end</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="5600243f" class="cell" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> <span class="fu">taskmodel</span>(task, _backbone)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>model.layers[<span class="kw">end</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="17">
 <div class="ansi-escaped-output">
 <pre>Chain(
@@ -558,9 +562,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Equivalently, we could have obtained an appropriate head as follows,</p>
-<div id="32642a42" class="cell" data-execution_count="17">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>h, w, ch, b <span class="op">=</span> Flux.<span class="fu">outputsize</span>(_backbone, (_resize, _resize, <span class="fl">3</span>, <span class="fl">1</span>))</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>_head <span class="op">=</span> Models.<span class="fu">visionhead</span>(ch, <span class="fu">length</span>(<span class="fu">unique</span>(labels)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="5e4b6764" class="cell" data-execution_count="17">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>h, w, ch, b <span class="op">=</span> Flux.<span class="fu">outputsize</span>(_backbone, (_resize, _resize, <span class="fl">3</span>, <span class="fl">1</span>))</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>_head <span class="op">=</span> Models.<span class="fu">visionhead</span>(ch, <span class="fu">length</span>(<span class="fu">unique</span>(labels)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="18">
 <div class="ansi-escaped-output">
 <pre>Chain(
@@ -582,8 +586,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>and then construct our model by chaining the backbone and head:</p>
-<div id="6be2a18d" class="cell" data-execution_count="18">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Chain</span>(_backbone, _head)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="a6174838" class="cell" data-execution_count="18">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Chain</span>(_backbone, _head)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="19">
 <div class="ansi-escaped-output">
 <pre>Chain(
@@ -692,22 +696,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>With the model defined, we can now create a <code>Learner</code> object from scratch:</p>
-<div id="251b6126" class="cell" data-execution_count="19">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Task data loader for new batch size:</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>batchsize <span class="op">=</span> <span class="fl">64</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>train_dl, val_dl <span class="op">=</span> <span class="fu">taskdataloaders</span>(train_data, val_data, task, batchsize)</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Set up loss function, optimizer, callbacks, and learner:</span></span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>lossfn <span class="op">=</span> Flux.Losses.logitcrossentropy</span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> Flux.<span class="fu">Adam</span>()</span>
-<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="fu">error_rate</span>(ŷ, y) <span class="op">=</span> <span class="fu">mean</span>(<span class="fu">onecold</span>(ŷ) <span class="op">.!=</span> <span class="fu">onecold</span>(y)) </span>
-<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>callbacks <span class="op">=</span> [<span class="fu">ToGPU</span>(), <span class="fu">Metrics</span>(error_rate)]</span>
-<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>learner <span class="op">=</span> <span class="fu">Learner</span>(</span>
-<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>    model, (train_dl, val_dl),</span>
-<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>    optimizer, lossfn,</span>
-<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>    callbacks<span class="op">...</span></span>
-<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="ab969181" class="cell" data-execution_count="19">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Task data loader for new batch size:</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>batchsize <span class="op">=</span> <span class="fl">64</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>train_dl, val_dl <span class="op">=</span> <span class="fu">taskdataloaders</span>(train_data, val_data, task, batchsize)</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Set up loss function, optimizer, callbacks, and learner:</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>lossfn <span class="op">=</span> Flux.Losses.logitcrossentropy</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> Flux.<span class="fu">Adam</span>()</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a><span class="fu">error_rate</span>(ŷ, y) <span class="op">=</span> <span class="fu">mean</span>(<span class="fu">onecold</span>(ŷ) <span class="op">.!=</span> <span class="fu">onecold</span>(y)) </span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>callbacks <span class="op">=</span> [<span class="fu">ToGPU</span>(), <span class="fu">Metrics</span>(error_rate)]</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>learner <span class="op">=</span> <span class="fu">Learner</span>(</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>    model, (train_dl, val_dl),</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    optimizer, lossfn,</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>    callbacks<span class="op">...</span></span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="20">
 <pre><code>Learner()</code></pre>
 </div>
@@ -723,12 +727,12 @@ The <code>FastAI.jl</code> way
 </div>
 <div class="callout-body-container callout-body">
 <p>Most of the manual jobs above can be done automatically using the <code>tasklearner</code> function:</p>
-<div id="c6bb8941" class="cell" data-execution_count="20">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>learner <span class="op">=</span> <span class="fu">tasklearner</span>(</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    task, train_data, val_data; </span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    backbone<span class="op">=</span>_backbone, callbacks<span class="op">=</span>callbacks,</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    lossfn<span class="op">=</span>lossfn, optimizer<span class="op">=</span>optimizer, batchsize<span class="op">=</span>batchsize,</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="6ddd538e" class="cell" data-execution_count="20">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>learner <span class="op">=</span> <span class="fu">tasklearner</span>(</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    task, train_data, val_data; </span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    backbone<span class="op">=</span>_backbone, callbacks<span class="op">=</span>callbacks,</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    lossfn<span class="op">=</span>lossfn, optimizer<span class="op">=</span>optimizer, batchsize<span class="op">=</span>batchsize,</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="21">
 <pre><code>Learner()</code></pre>
 </div>
@@ -737,22 +741,39 @@ The <code>FastAI.jl</code> way
 </div>
 </div>
 <p>We will begin by using the learning rate finder to find a good learning rate:</p>
-<div id="ea985705" class="cell" data-execution_count="21">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> <span class="fu">lrfind</span>(learner)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="56941703" class="cell" data-execution_count="21">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> <span class="fu">lrfind</span>(learner)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="fig-lr-finder" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="../www/c4_lr.png" class="img-fluid figure-img"></p>
+<p><img src="../www/c5_lr.png" class="img-fluid figure-img"></p>
 <figcaption class="figure-caption">Figure&nbsp;3.1: Learning rate finder output.</figcaption>
 </figure>
 </div>
 <p>Below we fine-tune the model for 5 epochs and then save it to disk:</p>
-<div id="7bf4f9ed" class="cell" data-execution_count="22">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fitonecycle!</span>(learner, <span class="fl">10</span>, <span class="fl">3e-4</span>)</span>
+<div id="a336e429" class="cell" data-execution_count="22">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">finetune!</span>(learner, <span class="fl">5</span>, <span class="fl">2e-3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Freeze epochs
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Note that by default, this will train the model for one epoch with pre-trained weights (our <code>_backbone</code>) completely frozen. In other weights, only the parameters of our <code>_head</code> will be updated during this epoch, before the second phase of training begins.</p>
+</div>
+</div>
+<p>Now we will fit the whole training cycle:</p>
+<div id="1bbb536e" class="cell" data-execution_count="23">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fitonecycle!</span>(learner, <span class="fl">5</span>, <span class="fl">2e-3</span>)</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">savetaskmodel</span>(<span class="st">"artifacts/c5_resnet.jld2"</span>, task, learner.model, force<span class="op">=</span><span class="cn">true</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Using our model, we can now make predictions on the validation set as follows:</p>
-<div id="e60fdffa" class="cell" data-execution_count="23">
+<div id="33be9711" class="cell" data-execution_count="24">
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>task, model <span class="op">=</span> <span class="fu">loadtaskmodel</span>(<span class="st">"artifacts/c5_resnet.jld2"</span>)</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> [<span class="fu">getobs</span>(data, i) for i <span class="kw">in</span> <span class="fu">rand</span>(<span class="fl">1</span><span class="op">:</span><span class="fu">numobs</span>(val_data), <span class="fl">3</span>)]</span>
@@ -766,23 +787,23 @@ The <code>FastAI.jl</code> way
 </div>
 <div class="cell-output cell-output-display" data-execution_count="22">
 <pre><code>3-element Vector{String}:
- "basset_hound"
- "american_bulldog"
- "boxer"</code></pre>
+ "bombay"
+ "persian"
+ "bombay"</code></pre>
 </div>
 </div>
 <p>The accuracy is given by:</p>
-<div id="842785ee" class="cell" data-execution_count="24">
+<div id="bfa22aa2" class="cell" data-execution_count="25">
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>acc <span class="op">=</span> <span class="fu">sum</span>(_labels <span class="op">.==</span> preds) <span class="op">/</span> <span class="fu">length</span>(preds)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="23">
 <pre><code>1.0</code></pre>
 </div>
 </div>
 <p>We can visualize the predictions as follows:</p>
-<div id="4b8424ea" class="cell" data-execution_count="25">
+<div id="8dba2f8f" class="cell" data-execution_count="26">
 <div class="sourceCode cell-code" id="cb41"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">showsamples</span>(task, <span class="fu">collect</span>(<span class="fu">zip</span>(images, preds)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="24">
-<p><img src="c5_files/figure-html/cell-26-output-1.svg" class="img-fluid"></p>
+<p><img src="c5_files/figure-html/cell-27-output-1.png" class="img-fluid"></p>
 </div>
 </div>
 
