@@ -23,8 +23,6 @@ import UnicodePlots
 # File paths:
 www_path = "www"
 data_path = joinpath("data", "mnist")
-
-
 ```
 
 Download MNIST dataset, and sepearate into training, validation and test sets:
@@ -96,8 +94,8 @@ size(three_tensors)
 
 ```{julia}
 
-stacked_sevens = stack(seven_tensors)
-stacked_threes = stack(three_tensors)
+stacked_sevens = MLUtils.stack(seven_tensors)
+stacked_threes = MLUtils.stack(three_tensors)
 size(stacked_sevens), size(stacked_threes)
 
 ```
@@ -171,10 +169,10 @@ The rule of broadcasting in Julia is different from Python? In Python, first ali
 ```{julia}
 
 valid_threes = sort(readdir(joinpath(data_path, "test", "3")))
-valid_3_tens = stack([load(joinpath(data_path, "test", "3", img)) for img in valid_threes])
+valid_3_tens = MLUtils.stack([load(joinpath(data_path, "test", "3", img)) for img in valid_threes])
 
 valid_sevens = sort(readdir(joinpath(data_path, "test", "7")))
-valid_7_tens = stack([load(joinpath(data_path, "test", "7", img)) for img in valid_sevens])
+valid_7_tens = MLUtils.stack([load(joinpath(data_path, "test", "7", img)) for img in valid_sevens])
 
 # valid_3_tens = permutedims(valid_3_tens, [3, 1, 2])
 
@@ -547,8 +545,8 @@ size(weights), size(bias)
 ```{julia}
 
 function reformat_dl(d1) 
-    xb = stack([x for (x, y) in d1], dims=1)
-    yb = stack([[y] for (x, y) in d1], dims=1)
+    xb = MLUtils.stack([x for (x, y) in d1], dims=1)
+    yb = MLUtils.stack([[y] for (x, y) in d1], dims=1)
     return xb, yb
 end
 

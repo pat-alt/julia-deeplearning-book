@@ -1,0 +1,286 @@
+# Chapter 5: Image Classification
+
+```{julia}
+#| echo: false
+#| output: false
+
+using Pkg; Pkg.activate(".")
+
+using DataAugmentation: ToEltype, compose
+using FastAI
+using FastAI.Datasets
+using FastVision
+using FastVision.Models
+using Flux
+using Flux: onecold
+using Images
+using Metalhead
+using MLUtils
+using Plots
+using StatsBase
+
+# Other:
+import FastMakie, CairoMakie
+CairoMakie.activate!(type="png")
+```
+
+::: {.callout-note}
+
+## `FastAI.jl`
+
+He we are closely following the `FastAI.jl` tutorials on [data containers](https://fluxml.ai/FastAI.jl/dev/FastAI@dev/doc/docs/data_containers.md.html), [siamese image similarity](https://fluxml.ai/FastAI.jl/dev/FastAI@dev/doc/docs/notebooks/siamese.ipynb.html)
+
+:::
+
+We can load the Pet dataset as follows:
+
+```{julia}
+dir = FastAI.load(datasets()["oxford-iiit-pet"])
+```
+
+```{julia}
+readdir(dir)
+```
+
+```{julia}
+img_dir = joinpath(dir, "images")
+```
+
+::: {.callout-tip}
+
+## `FastAI.jl` convention
+
+Using `FastAI.jl` convention, we can load a single image as follows:
+
+```{julia}
+files = loadfolderdata(img_dir; filterfn=FastVision.isimagefile)
+p = getobs(files, 1)
+```
+
+We can see that the file names contain the pet breed. 
+
+:::
+
+Using *regular expressions*, we can extract the pet breed from the file name:
+
+```{julia}
+re = r"(.+)_\d+.jpg$"
+fname = pathname(p)
+label_func(path) = lowercase(match(re, pathname(path))[1])
+label_func(fname)
+```
+
+Now lets check how many unique pet breeds we have:
+
+```{julia}
+labels = map(label_func, files)
+length(unique(labels))
+```
+
+We can create a function that loads an image and its class:
+
+```{julia}
+function loadimageclass(p)
+    return (
+        @. loadfile(p),                 # broadcasting to make compatible with minibatching
+        @. pathname(p) |> label_func
+    )
+end
+
+image, class = loadimageclass(p)
+
+@show class
+image
+```
+
+Finally, we can use `mapobs` to lazily load all the images and their classes:
+
+```{julia}
+data = mapobs(loadimageclass, files);
+```
+
+```{julia}
+@show numobs(data)
+image, label = getobs(data, 1)
+```
+
+## Using the Data Block API
+
+::: {.callout-warning}
+
+## `FastAI.jl` convention
+
+Contrary to fast.ai, `FastAI.jl` separates the data loading and container generation from the data augmentation. From the [documentation](https://fluxml.ai/FastAI.jl/dev/FastAI@dev/doc/docs/notebooks/siamese.ipynb.html):
+
+> In FastAI.jl, the preprocessing or "encoding" is implemented through a learning task. Learning tasks contain any configuration and, beside data processing, have extensible functions for visualizations and model building. One advantage of this separation between loading and encoding is that the data container can easily be swapped out as long as it has observations suitable for the learning task (in this case a tuple of two images and a Boolean). It also makes it easy to export models and all the necessary configuration.
+
+:::
+
+First, we follow the standard procedure to split the data into training and validation sets:
+
+```{julia}
+train_data, val_data = splitobs(data; at=0.8, shuffle=true)
+```
+
+Next, we define the data augmentation task separately as a `BlockTask`:
+
+```{julia}
+_resize = 128
+blocks = (
+    Image{2}(),
+    Label{String}(unique(labels)),
+)
+task = BlockTask(
+    blocks,
+    (   
+        ProjectiveTransforms(
+            (_resize, _resize), 
+            sharestate=false,
+            buffered=false,
+        ),
+        ImagePreprocessing(buffered=false),
+        OneHot(),
+    )
+)
+describetask(task)
+```
+
+We can apply the augmentation to the data as follows:
+
+```{julia}
+batchsize = 3
+train_dl, val_dl = taskdataloaders(train_data, val_data, task, batchsize)
+```
+
+Let's quickly verify that the images look as expected:
+
+```{julia}
+showbatch(task, first(train_dl))
+```
+
+Finally, we can build our model as follows. First, we define the backbone:
+
+```{julia}
+# Get backbone:
+_backbone = Metalhead.ResNet(18, pretrain=true).layers[1][1:end-1]
+```
+
+Here we have removed the final layer of the ResNet model, because we will instead use a custom head. We could use the `taskmodel` function to build the model with an appropriate head automatically:
+
+```{julia}
+model = taskmodel(task, _backbone)
+model.layers[end]
+```
+
+Equivalently, we could have obtained an appropriate head as follows,
+
+```{julia}
+h, w, ch, b = Flux.outputsize(_backbone, (_resize, _resize, 3, 1))
+_head = Models.visionhead(ch, length(unique(labels)))
+```
+
+and then construct our model by chaining the backbone and head:
+
+```{julia}
+Chain(_backbone, _head)
+```
+
+With the model defined, we can now create a `Learner` object from scratch:
+
+```{julia}
+
+# Task data loader for new batch size:
+batchsize = 64
+train_dl, val_dl = taskdataloaders(train_data, val_data, task, batchsize)
+
+# Set up loss function, optimizer, callbacks, and learner:
+lossfn = Flux.Losses.logitcrossentropy
+optimizer = Flux.Adam()
+error_rate(ŷ, y) = mean(onecold(ŷ) .!= onecold(y)) 
+callbacks = [ToGPU(), Metrics(error_rate)]
+
+learner = Learner(
+    model, (train_dl, val_dl),
+    optimizer, lossfn,
+    callbacks...
+)
+```
+
+
+::: {.callout-tip}
+
+## The `FastAI.jl` way
+
+Most of the manual jobs above can be done automatically using the `tasklearner` function:
+
+```{julia}
+learner = tasklearner(
+    task, train_data, val_data; 
+    backbone=_backbone, callbacks=callbacks,
+    lossfn=lossfn, optimizer=optimizer, batchsize=batchsize,
+)
+```
+
+Note that in this case, we pass on the raw, non-encoded data to the `tasklearner` function. This is because the `tasklearner` function will automatically encode the data using the `task` object.
+
+:::
+
+We will begin by using the learning rate finder to find a good learning rate:
+
+```{julia}
+#| eval: false
+
+res = lrfind(learner)
+```
+
+![Learning rate finder output.](../www/c5_lr.png){#fig-lr-finder}
+
+
+Below we fine-tune the model for 5 epochs and then save it to disk:
+
+```{julia}
+#| eval: false
+
+finetune!(learner, 5, 2e-3)
+```
+
+::: {.callout-note}
+
+## Freeze epochs
+
+Note that by default, this will train the model for one epoch with pre-trained weights (our `_backbone`) completely frozen. In other weights, only the parameters of our `_head` will be updated during this epoch, before the second phase of training begins.
+
+:::
+
+Now we will fit the whole training cycle:
+
+```{julia}
+#| eval: false
+
+fitonecycle!(learner, 5, 2e-3)
+savetaskmodel("artifacts/c5_resnet.jld2", task, learner.model, force=true)
+```
+
+Using our model, we can now make predictions on the validation set as follows:
+
+```{julia}
+task, model = loadtaskmodel("artifacts/c5_resnet.jld2")
+
+samples = [getobs(data, i) for i in rand(1:numobs(val_data), 3)]
+images = [sample[1] for sample in samples]
+_labels = [sample[2] for sample in samples]
+
+preds = predictbatch(task, model, images; device = gpu, context=Validation())
+```
+
+The accuracy is given by:
+
+```{julia}
+acc = sum(_labels .== preds) / length(preds)
+```
+
+We can visualize the predictions as follows:
+
+```{julia}
+showsamples(task, collect(zip(images, preds)))
+```
