@@ -25,7 +25,7 @@ www_path = "www"
 data_path = joinpath("data", "mnist")
 ```
 
-Download MNIST dataset, and sepearate into training, validation and test sets:
+Download MNIST dataset, and separate into training, validation and test sets:
 
 ```{julia}
 #| echo: false
